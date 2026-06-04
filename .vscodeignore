@@ -1,0 +1,15 @@
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+tsconfig.json
+**/*.map
+node_modules/**
+CLAUDE.md
+PROMOTION.md
+.claude/**
+.teachcm/**
+.tcm-mockups/**
+scripts/**
+media/*.svg
+*.vsix

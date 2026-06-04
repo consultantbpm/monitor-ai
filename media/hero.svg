@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="480" viewBox="0 0 1280 480" font-family="-apple-system, 'Segoe UI', system-ui, sans-serif">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0e1116"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+    <linearGradient id="fillGrad" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#4ec9b0"/>
+      <stop offset="100%" stop-color="#c586c0"/>
+    </linearGradient>
+    <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#4ec9b0" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#4ec9b0" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+
+  <rect width="1280" height="480" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid -->
+  <g stroke="#1f2937" stroke-width="0.5" opacity="0.4">
+    <line x1="0" y1="120" x2="1280" y2="120"/>
+    <line x1="0" y1="240" x2="1280" y2="240"/>
+    <line x1="0" y1="360" x2="1280" y2="360"/>
+  </g>
+
+  <!-- LEFT: Big headline -->
+  <g transform="translate(80, 110)">
+    <text x="0" y="0" fill="#4ec9b0" font-size="14" letter-spacing="3" font-weight="600">AI CODE EXPOSURE MONITOR</text>
+
+    <text x="0" y="56" fill="#e8e8e8" font-size="44" font-weight="700">How much of your code</text>
+    <text x="0" y="106" fill="#e8e8e8" font-size="44" font-weight="700">has AI already seen?</text>
+
+    <text x="0" y="158" fill="#9aa4b2" font-size="16">Live status bar indicator. Per-project peaks.</text>
+    <text x="0" y="180" fill="#9aa4b2" font-size="16">100% local. Works alongside Copilot, Claude, Cursor.</text>
+
+    <!-- Mock status bar pill -->
+    <g transform="translate(0, 220)">
+      <rect x="0" y="0" width="280" height="36" rx="18" fill="#005a9e"/>
+      <text x="22" y="24" fill="#fff" font-size="14">👁 AI exposure:</text>
+      <text x="148" y="24" fill="#fff" font-size="14" font-weight="700">37.4%</text>
+      <!-- inline mini sparkline -->
+      <path fill="none" stroke="#fff" stroke-width="1.4" opacity="0.85" d="M198,24 L208,22 L218,21 L228,18 L238,16 L248,14 L258,12 L268,10"/>
+    </g>
+  </g>
+
+  <!-- RIGHT: Dashboard card preview -->
+  <g transform="translate(720, 80)">
+    <rect x="0" y="0" width="480" height="320" rx="10" fill="#1e1e1e" stroke="#3c3c3c"/>
+
+    <!-- Card header -->
+    <g transform="translate(20, 30)">
+      <text x="0" y="0" fill="#cccccc" font-size="13">monitor-ai</text>
+      <text x="0" y="52" fill="#e8e8e8" font-size="42" font-weight="700">37.4%</text>
+      <!-- Bar -->
+      <rect x="0" y="68" width="440" height="12" rx="6" fill="#3c3c3c"/>
+      <rect x="0" y="68" width="164" height="12" rx="6" fill="url(#fillGrad)"/>
+      <rect x="272" y="66" width="2" height="16" fill="#cccccc" opacity="0.6"/>
+      <text x="0" y="100" fill="#9aa4b2" font-size="11">Peak 62.0% · 4h ago</text>
+    </g>
+
+    <!-- Live monitor inside card -->
+    <g transform="translate(20, 200)">
+      <circle cx="6" cy="-2" r="4" fill="#4ec9b0" filter="url(#glow)"/>
+      <circle cx="6" cy="-2" r="4" fill="#4ec9b0"/>
+      <text x="20" y="2" fill="#a0a0a0" font-size="10" letter-spacing="1.4">LIVE</text>
+      <text x="440" y="2" fill="#888" font-size="10" text-anchor="end">2s ago</text>
+
+      <rect x="0" y="14" width="440" height="80" rx="4" fill="#0e1116"/>
+      <path fill="url(#sparkFill)" d="M0,80 L22,74 L44,68 L66,64 L88,58 L110,56 L132,50 L154,46 L176,40 L198,36 L220,32 L242,28 L264,24 L286,22 L308,20 L330,18 L352,16 L374,15 L396,14 L418,14 L440,14 L440,94 L0,94 Z"/>
+      <path fill="none" stroke="#4ec9b0" stroke-width="1.6" d="M0,80 L22,74 L44,68 L66,64 L88,58 L110,56 L132,50 L154,46 L176,40 L198,36 L220,32 L242,28 L264,24 L286,22 L308,20 L330,18 L352,16 L374,15 L396,14 L418,14 L440,14"/>
+    </g>
+  </g>
+</svg>

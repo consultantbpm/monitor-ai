@@ -1,0 +1,178 @@
+{
+  "name": "ai-code-exposure-monitor",
+  "displayName": "AI Code Exposure Monitor",
+  "description": "Real-time percentage of your workspace source code that has been opened in the editor (and thus potentially exposed to AI assistants). Tracks peaks across all projects.",
+  "version": "0.2.3",
+  "publisher": "ConsultantBPMhumansoftware",
+  "license": "MIT",
+  "icon": "media/eye.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/consultantbpm/monitor-ai"
+  },
+  "bugs": {
+    "url": "https://github.com/consultantbpm/monitor-ai/issues"
+  },
+  "homepage": "https://github.com/consultantbpm/monitor-ai#readme",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "ai exposure",
+    "ai safety",
+    "ai privacy",
+    "copilot",
+    "claude",
+    "cursor",
+    "continue",
+    "gemini",
+    "codeium",
+    "monitor",
+    "monitoring",
+    "audit",
+    "compliance",
+    "privacy",
+    "security",
+    "ip",
+    "leak",
+    "context",
+    "mcp",
+    "telemetry",
+    "status bar",
+    "dashboard"
+  ],
+  "galleryBanner": {
+    "color": "#0e1116",
+    "theme": "dark"
+  },
+  "qna": "marketplace",
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "aiExposure.showDashboard",
+        "title": "AI Code Exposure: Show Dashboard"
+      },
+      {
+        "command": "aiExposure.resetCurrent",
+        "title": "AI Code Exposure: Reset Current Project"
+      },
+      {
+        "command": "aiExposure.resetPeaks",
+        "title": "AI Code Exposure: Reset All Peaks"
+      },
+      {
+        "command": "aiExposure.forgetProject",
+        "title": "AI Code Exposure: Forget a Project…"
+      },
+      {
+        "command": "aiExposure.rescan",
+        "title": "AI Code Exposure: Rescan Workspace"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aiExposure",
+          "title": "AI Code Exposure",
+          "icon": "media/eye.svg"
+        }
+      ]
+    },
+    "views": {
+      "aiExposure": [
+        {
+          "type": "webview",
+          "id": "aiExposure.current",
+          "name": "Current Project",
+          "contextualTitle": "AI Code Exposure"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AI Code Exposure Monitor",
+      "properties": {
+        "aiExposure.includeGlobs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/*.{ts,tsx,js,jsx,mjs,cjs,py,java,go,rs,rb,c,cpp,cc,h,hpp,cs,php,swift,kt,scala,vue,svelte,html,css,scss,less,sh,ps1,sql}"
+          ],
+          "description": "Glob patterns for files counted as source code."
+        },
+        "aiExposure.excludeGlobs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/out/**",
+            "**/.venv/**",
+            "**/__pycache__/**",
+            "**/.next/**",
+            "**/target/**",
+            "**/.gradle/**",
+            "**/.idea/**",
+            "**/coverage/**",
+            "**/.vscode-test/**"
+          ],
+          "description": "Glob patterns to exclude from counting."
+        },
+        "aiExposure.persistAcrossSessions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remember which files were opened across VS Code restarts (per project)."
+        },
+        "aiExposure.maxFileSizeKB": {
+          "type": "number",
+          "default": 2048,
+          "description": "Skip files larger than this when counting lines."
+        },
+        "aiExposure.thresholdAd.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a one-time notification when this project's exposure first crosses 50%."
+        },
+        "aiExposure.thresholdAd.percent": {
+          "type": "number",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Percentage threshold that triggers the notification."
+        },
+        "aiExposure.thresholdAd.url": {
+          "type": "string",
+          "default": "https://marketplace.visualstudio.com/search?term=pando&target=VSCode",
+          "description": "URL opened from the high-exposure notification's CTA button."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "gifenc": "^1.0.3",
+    "sharp": "^0.34.5",
+    "typescript": "^5.4.0"
+  }
+}
