@@ -37,7 +37,19 @@ export function showDashboard(_context: vscode.ExtensionContext, tracker: Exposu
     if (msg?.type === 'open' && typeof msg.path === 'string') {
       void vscode.window.showTextDocument(vscode.Uri.file(msg.path));
     }
+    if (msg?.type === 'openSensitive' && typeof msg.path === 'string') {
+      await vscode.commands.executeCommand('aiExposure.openSensitive', msg.path);
+    }
+    if (msg?.type === 'togglePsde')      await vscode.commands.executeCommand('aiExposure.toggleProactiveProtection');
+    if (msg?.type === 'reviewSensitive') await vscode.commands.executeCommand('aiExposure.reviewSensitive');
+    if (msg?.type === 'reviewCategory' && (msg.category === 'secret' || msg.category === 'credential' || msg.category === 'pii')) {
+      await vscode.commands.executeCommand('aiExposure.reviewSensitiveByCategory', msg.category);
+    }
   });
+  const cfgSub = vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration('aiExposure.proactiveProtection')) post();
+  });
+  panel.onDidDispose(() => cfgSub.dispose());
   post();
   postHistory();
 }
@@ -63,7 +75,9 @@ function snapshot(tracker: ExposureTracker) {
       risk: s.risk,
     };
   });
-  return { current, projects, files: breakdown, sensitive };
+  const psdeOn = !!vscode.workspace.getConfiguration('aiExposure').get<boolean>('proactiveProtection.enabled', false);
+  const protectedCount = tracker.sensitiveFilesAll().length;
+  return { current, projects, files: breakdown, sensitive, psdeOn, protectedCount };
 }
 
 function renderHtml(): string {
@@ -91,10 +105,11 @@ function renderHtml(): string {
   td.action { width: 32px; text-align: center; }
   td.dot { width: 16px; color: var(--vscode-disabledForeground); }
   tr.current { font-weight: 600; }
-  tr.current td.dot { color: #4ec9b0; }
-  tr.exposed td.dot { color: #f44747; }
+  tr.exposed td.dot { /* color set via inline style by pctColor */ }
+  td.dot { font-size: 1.1em; }
   td.path { font-family: var(--vscode-editor-font-family); cursor: pointer; }
   td.path:hover { text-decoration: underline; }
+  tr.exposed td.path { color: #f44747; font-weight: 600; }
   .filter { margin-top: 12px; }
   input[type=text] { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); padding: 4px 8px; width: 240px; }
   label { margin-right: 12px; }
@@ -163,75 +178,42 @@ function renderHtml(): string {
   .sensitive-list .row { display: grid; grid-template-columns: 1fr max-content; gap: 8px; padding: 3px 0; border-bottom: 1px dashed var(--vscode-panel-border); }
   .sensitive-list .row:last-child { border-bottom: 0; }
   .sensitive-list .risk { color: #ffb86b; font-variant-numeric: tabular-nums; }
+
+  .sen-group { margin: 10px 0; border: 1px solid var(--vscode-panel-border); border-radius: 6px; overflow: hidden; }
+  .sen-group-head { padding: 6px 12px; background: var(--vscode-input-background); font-weight: 600; font-size: 0.9em; display: flex; gap: 8px; align-items: baseline; }
+  .sen-group-head .cnt { opacity: 0.6; font-weight: 400; font-size: 0.9em; }
+  .sen-group-head .cur { margin-left: auto; font-size: 0.75em; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.06em; }
+  .sen-row { display: grid; grid-template-columns: 1fr max-content max-content; gap: 10px; align-items: center; padding: 5px 12px; border-top: 1px solid var(--vscode-panel-border); font-size: 0.88em; }
+  .sen-path { font-family: var(--vscode-editor-font-family); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f44747; font-weight: 600; }
+  .sen-path:hover { text-decoration: underline; }
+  .sen-badges { display: flex; gap: 4px; }
+  .sen-badge { font-size: 0.72em; padding: 1px 6px; border-radius: 3px; font-weight: 700; letter-spacing: 0.04em; }
+  .sen-badge.secret     { background: rgba(229,57,53,0.18);  color: #e57373; }
+  .sen-badge.credential { background: rgba(245,124,0,0.18);  color: #ffb74d; }
+  .sen-badge.pii        { background: rgba(251,192,45,0.18); color: #fdd835; }
+  .sen-open { padding: 2px 10px; margin: 0; }
 </style></head>
 <body>
   <h1>AI Code Exposure Dashboard</h1>
-
-  <div id="aiBanner"></div>
-
-  <div id="currentBlock">
-    <div class="big" id="pct">—</div>
-    <div class="bar">
-      <div class="fill" id="fill" style="width:0%"></div>
-      <div class="peakMark" id="peakMark" style="display:none"></div>
-    </div>
-    <div class="peakBadge" id="peakBadge"></div>
-    <div class="grid">
-      <div>Project</div><div id="projName">—</div>
-      <div>Exposed lines</div><div id="el">0</div>
-      <div>Total lines</div><div id="tl">0</div>
-      <div>Exposed files</div><div id="ef">0</div>
-      <div>Total files</div><div id="tf">0</div>
-      <div>Peak %</div><div id="peakPct">0%</div>
-      <div>Peak exposed lines</div><div id="peakLines">0</div>
-      <div>⚠ Sensitive files exposed</div><div id="senCount">0</div>
-      <div>Peak sensitive exposed</div><div id="senPeak">0</div>
-    </div>
-    <button id="rescan">Rescan workspace</button>
-    <button id="reset" class="secondary">Reset session</button>
-    <button id="resetPeaks" class="secondary">Reset all peaks</button>
-  </div>
-
-  <div class="live">
-    <div class="live-head" id="liveHead">
-      <span class="chev" id="chev">▾</span>
-      <span class="dot" id="dot"></span>
-      <span class="title">Live monitor</span>
-      <span class="age" id="age">—</span>
-    </div>
-    <div class="live-body" id="liveBody">
-      <div>
-        <svg class="spark" id="spark" viewBox="0 0 600 90" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%"   stop-color="#f44747" stop-opacity="0.45"/>
-              <stop offset="100%" stop-color="#f44747" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <path id="sparkArea" fill="url(#sparkFill)" d=""></path>
-          <path id="sparkLine" fill="none" stroke="#f44747" stroke-width="1.4" d=""></path>
-        </svg>
-        <div class="spark-meta">
-          <span>% AI exposure · last 60s (1 sample/s)</span>
-          <span id="sparkRange">—</span>
-        </div>
-      </div>
-      <div class="feed" id="feed"></div>
-    </div>
-  </div>
+  <div style="font-size:0.9em; opacity:0.8; margin: 0 0 14px">Current project details, sparkline, and sensitive files are in the <b>AI Code Exposure</b> sidebar (eye icon in the activity bar).</div>
 
   <h2>All projects</h2>
-  <div style="font-size:0.85em; opacity:0.75">Every workspace this extension has seen. Peaks are retained across restarts. ● marks the current workspace.</div>
+  <div style="font-size:0.85em; opacity:0.75">Every workspace this extension has seen. Peaks are retained across restarts. ● marks the current workspace. Sorted by current exposure %.</div>
+  <div style="margin: 8px 0; display: flex; gap: 8px; align-items: center;">
+    <button id="resetPeaks" class="secondary">Reset all peaks</button>
+  </div>
   <table>
     <thead><tr>
-      <th></th>
       <th>Project</th>
-      <th>Current</th>
       <th class="num">Now %</th>
       <th class="num">Peak %</th>
       <th class="num">Exposed L</th>
       <th class="num">Total L</th>
+      <th class="num" title="Files opened (exposed to AI) in this project">Exposed F</th>
       <th class="num">Files</th>
+      <th class="num" title="Files exposed containing API keys, private keys, tokens, DB URLs">Secrets</th>
+      <th class="num" title="Files exposed containing hardcoded passwords/usernames/auth headers">Pass</th>
+      <th class="num" title="Files exposed containing emails, SSN, credit cards, phone, IBAN, DOB">PII</th>
       <th>Last seen</th>
       <th class="action"></th>
     </tr></thead>
@@ -239,10 +221,14 @@ function renderHtml(): string {
     <tfoot id="projectFoot"></tfoot>
   </table>
 
-  <div class="sensitive-block" id="sensitiveBlock" style="display:none">
-    <h3>⚠ Sensitive files currently exposed</h3>
-    <div class="sensitive-list" id="sensitiveList"></div>
+  <h2>🛡 PSDE — Proactive Sensitive Data Exposure</h2>
+  <div style="font-size:0.85em; opacity:0.75">Files containing secrets, credentials, or PII that AI tools could read once opened. Click a file (or <b>Open</b>) to inspect it — sensitive values are highlighted inline. Grouped by project.</div>
+  <div style="margin: 8px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+    <button id="psde" class="secondary" title="Proactive Sensitive Data Exposure — prescan + block + review">🛡 PSDE</button>
+    <button id="review" class="secondary" title="Review all sensitive files (current project)">Review sensitive</button>
+    <span id="psdeStatus" style="font-size:0.85em; opacity:0.75"></span>
   </div>
+  <div id="sensitiveGroups"></div>
 
   <h2>Files (current project)</h2>
   <div class="filter">
@@ -250,7 +236,7 @@ function renderHtml(): string {
     <label><input type="checkbox" id="onlyExposed" /> only exposed</label>
   </div>
   <table>
-    <thead><tr><th></th><th>File</th><th class="num">Lines</th></tr></thead>
+    <thead><tr><th>File</th><th class="num">Lines</th></tr></thead>
     <tbody id="fileRows"></tbody>
   </table>
 
@@ -258,120 +244,27 @@ function renderHtml(): string {
   const vscode = acquireVsCodeApi();
   let state = null;
 
-  document.getElementById('rescan').onclick     = () => vscode.postMessage({ type: 'rescan' });
-  document.getElementById('reset').onclick      = () => vscode.postMessage({ type: 'reset' });
   document.getElementById('resetPeaks').onclick = () => vscode.postMessage({ type: 'resetPeaks' });
+  document.getElementById('psde').onclick       = () => vscode.postMessage({ type: 'togglePsde' });
+  document.getElementById('review').onclick     = () => vscode.postMessage({ type: 'reviewSensitive' });
+  function setPsdeButton(on, protectedCount) {
+    const b = document.getElementById('psde');
+    const s = document.getElementById('psdeStatus');
+    if (!b) return;
+    b.style.background = on ? '#4ec9b0' : '';
+    b.style.color = on ? '#000' : '';
+    b.style.fontWeight = on ? '700' : '';
+    b.textContent = '🛡 PSDE: ' + (on ? 'ON (' + (protectedCount || 0) + ')' : 'OFF');
+    if (s) s.textContent = on ? '· protecting ' + protectedCount + ' file(s) — AI is blocked from silently seeing them' : '';
+  }
   document.getElementById('q').oninput          = renderFiles;
   document.getElementById('onlyExposed').onchange = renderFiles;
 
-  // ----- Live monitor: collapse, sparkline, feed, heartbeat -----
-  const persisted = vscode.getState() || {};
-  let collapsed = !!persisted.liveCollapsed;
-  applyCollapsed();
-  document.getElementById('liveHead').addEventListener('click', () => {
-    collapsed = !collapsed;
-    vscode.setState({ ...vscode.getState(), liveCollapsed: collapsed });
-    applyCollapsed();
-  });
-  function applyCollapsed() {
-    document.getElementById('liveBody').classList.toggle('hidden', collapsed);
-    document.getElementById('liveHead').classList.toggle('collapsed', collapsed);
-  }
-
-  const SPARK_LEN = 60;
-  let series = [];
-  let lastPct = 0;
-  let lastChangeTs = 0;
-  setInterval(tick, 1000);
-  function tick() {
-    series.push(lastPct);
-    if (series.length > SPARK_LEN) series.shift();
-    drawSpark();
-    refreshAge();
-  }
-  function drawSpark() {
-    const line = document.getElementById('sparkLine');
-    const area = document.getElementById('sparkArea');
-    const range = document.getElementById('sparkRange');
-    if (series.length === 0) { line.setAttribute('d', ''); area.setAttribute('d', ''); range.textContent = '—'; return; }
-    const W = 600, H = 90;
-    const maxY = Math.max(5, ...series);
-    const minY = Math.min(...series);
-    const step = W / Math.max(1, SPARK_LEN - 1);
-    const offset = SPARK_LEN - series.length;
-    let d = '';
-    series.forEach((v, i) => {
-      const x = (i + offset) * step;
-      const y = H - (v / maxY) * (H - 4) - 2;
-      d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
-    });
-    line.setAttribute('d', d.trim());
-    const first = offset * step;
-    const last  = (SPARK_LEN - 1) * step;
-    area.setAttribute('d', d.trim() + ' L' + last.toFixed(1) + ',' + H + ' L' + first.toFixed(1) + ',' + H + ' Z');
-    range.textContent = 'min ' + minY.toFixed(1) + '% · max ' + maxY.toFixed(1) + '%';
-  }
-  function refreshAge() {
-    const ageEl = document.getElementById('age');
-    const dot   = document.getElementById('dot');
-    if (!lastChangeTs) { ageEl.textContent = 'no events yet'; dot.classList.add('stale'); return; }
-    const s = Math.max(0, Math.floor((Date.now() - lastChangeTs) / 1000));
-    ageEl.textContent = (s < 60 ? s + 's' : s < 3600 ? Math.floor(s/60) + 'm' : Math.floor(s/3600) + 'h') + ' ago';
-    dot.classList.toggle('stale', s > 10);
-  }
-  function pushFeedRow(ev, fresh) {
-    const feed = document.getElementById('feed');
-    const row = document.createElement('div');
-    const sensitive = !!(ev.risk && ev.risk.length);
-    row.className = 'feed-row' + (fresh ? ' fresh' : '') + (sensitive ? ' sensitive' : '');
-    const badgeChar = ({
-      exposed: '●', changed: '✎', created: '+', deleted: '✕', reset: '↻', rescan: '↻'
-    })[ev.type] || '○';
-    const label = ev.rel || ev.path || (ev.type === 'reset' ? 'session reset' : ev.type === 'rescan' ? 'workspace rescanned' : '');
-    const baseMeta = (ev.lines !== undefined && (ev.type === 'changed' ? (ev.lines >= 0 ? '+' : '') + ev.lines + ' L' : fmt(ev.lines) + ' L')) || '';
-    const riskMeta = sensitive ? ' · ' + (ev.risk[0]) + (ev.risk.length > 1 ? ' (+' + (ev.risk.length - 1) + ')' : '') : '';
-    const titleAttr = sensitive
-      ? (ev.path || '') + ' — risk: ' + (ev.risk || []).join(', ')
-      : (ev.path || '');
-    row.innerHTML =
-      '<span class="badge b-' + ev.type + '">' + badgeChar + '</span>' +
-      '<span class="path" data-path="' + escapeAttr(ev.path || '') + '" title="' + escapeAttr(titleAttr) + '">' + escapeHtml(label) + '</span>' +
-      '<span class="meta">' + baseMeta + riskMeta + ' · ' + ageLabel(ev.ts) + '</span>';
-    const pathEl = row.querySelector('.path');
-    if (ev.path) pathEl.addEventListener('click', () => vscode.postMessage({ type: 'open', path: ev.path }));
-    feed.insertBefore(row, feed.firstChild);
-    while (feed.children.length > 60) feed.removeChild(feed.lastChild);
-  }
-  function bumpDot() {
-    const dot = document.getElementById('dot');
-    dot.classList.remove('beat');
-    void dot.offsetWidth;
-    dot.classList.add('beat');
-  }
-  function animateNum(el, next) {
-    if (!el) return;
-    const prev = parseInt(el.dataset.value || '0', 10);
-    if (prev === next) { el.textContent = fmt(next); el.dataset.value = String(next); return; }
-    el.dataset.value = String(next);
-    el.classList.remove('bump-up','bump-down');
-    void el.offsetWidth;
-    el.classList.add(next > prev ? 'bump-up' : 'bump-down');
-    const start = performance.now(), dur = 450;
-    function step(t) {
-      const k = Math.min(1, (t - start) / dur);
-      const eased = 1 - Math.pow(1 - k, 3);
-      el.textContent = fmt(Math.round(prev + (next - prev) * eased));
-      if (k < 1) requestAnimationFrame(step);
-      else el.textContent = fmt(next);
-    }
-    requestAnimationFrame(step);
-  }
-
   function fmt(n) { return (n || 0).toLocaleString(); }
   function pctColor(p) {
-    if (p > 50) return '#f44747';
-    if (p > 25) return '#e8731a';
-    return '';
+    if (p >= 50) return '#f44747';
+    if (p >= 25) return '#e8731a';
+    return '#000';
   }
   function ageLabel(ms) {
     if (!ms) return '—';
@@ -386,118 +279,52 @@ function renderHtml(): string {
 
   window.addEventListener('message', (e) => {
     const m = e.data;
-    if (!m) return;
-    if (m.type === 'state') {
-      state = m.payload;
-      render();
-      if (state.current) lastPct = state.current.percent || 0;
-    } else if (m.type === 'history') {
-      const evs = m.payload.activity || [];
-      document.getElementById('feed').innerHTML = '';
-      evs.slice().reverse().forEach((ev) => pushFeedRow(ev, false));
-      if (evs.length) lastChangeTs = evs[evs.length - 1].ts;
-      refreshAge();
-    } else if (m.type === 'activity') {
-      const ev = m.payload;
-      pushFeedRow(ev, true);
-      lastChangeTs = ev.ts;
-      bumpDot();
-      refreshAge();
-    }
+    if (!m || m.type !== 'state') return;
+    state = m.payload;
+    setPsdeButton(!!state.psdeOn, state.protectedCount);
+    render();
   });
 
   function render() {
-    renderAiBanner();
-    renderCurrent();
     renderProjects();
-    renderFiles();
     renderSensitive();
-  }
-
-  function renderAiBanner() {
-    const el = document.getElementById('aiBanner');
-    const ai = state.current?.ai;
-    if (!ai) { el.innerHTML = ''; return; }
-    const parts = [];
-    if (ai.nativeAi) parts.push(escapeHtml(ai.host) + ' (native AI)');
-    parts.push(...ai.extensions.map(escapeHtml));
-    if (parts.length === 0) {
-      el.innerHTML =
-        '<div class="ai-banner safe">' +
-          '<span class="ai-icon">●</span>' +
-          '<div class="ai-line">' +
-            '<div><span class="ai-host">Host:</span> ' + escapeHtml(ai.host) + '</div>' +
-            '<div class="ai-explain">No AI assistants detected.</div>' +
-          '</div>' +
-        '</div>';
-      return;
-    }
-    el.innerHTML =
-      '<div class="ai-banner">' +
-        '<span class="ai-icon">🤖</span>' +
-        '<div class="ai-line">' +
-          '<div><span class="ai-host">Host:</span> ' + escapeHtml(ai.host) + ' · <span class="ai-names">' + parts.join(', ') + '</span></div>' +
-          '<div class="ai-explain">Your code is potentially visible to ' + parts.length + ' AI context window' + (parts.length === 1 ? '' : 's') + '.</div>' +
-        '</div>' +
-      '</div>';
+    renderFiles();
   }
 
   function renderSensitive() {
-    const block = document.getElementById('sensitiveBlock');
-    const list = document.getElementById('sensitiveList');
-    const items = state.sensitive || [];
-    if (items.length === 0) { block.style.display = 'none'; list.innerHTML = ''; return; }
-    block.style.display = '';
-    list.innerHTML = items.map((s) =>
-      '<div class="row" title="' + escapeAttr(s.path) + '">' +
-        '<span class="path" data-path="' + escapeAttr(s.path) + '">⚠ ' + escapeHtml(s.rel) + '</span>' +
-        '<span class="risk">' + escapeHtml(s.risk.slice(0, 3).join(', ')) + (s.risk.length > 3 ? ' (+' + (s.risk.length - 3) + ')' : '') + '</span>' +
-      '</div>'
-    ).join('');
-    list.querySelectorAll('.path[data-path]').forEach((el) => {
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', () => vscode.postMessage({ type: 'open', path: el.dataset.path }));
-    });
-  }
-
-  function renderCurrent() {
-    const c = state.current;
-    if (!c) {
-      document.getElementById('pct').textContent = '—';
-      document.getElementById('projName').textContent = 'no folder open';
-      document.getElementById('fill').style.width = '0%';
-      document.getElementById('peakMark').style.display = 'none';
-      document.getElementById('peakBadge').textContent = '';
+    const host = document.getElementById('sensitiveGroups');
+    host.innerHTML = '';
+    const projs = (state.projects || []).filter(p => (p.sensitiveFiles || []).length > 0);
+    if (!projs.length) {
+      host.innerHTML = '<div style="opacity:0.6; font-style:italic; padding:6px 0">No sensitive files detected in any tracked project.</div>';
       return;
     }
-    const pctEl = document.getElementById('pct');
-    pctEl.textContent = c.percent.toFixed(1) + '%';
-    pctEl.style.color = pctColor(c.percent);
-    const fillEl = document.getElementById('fill');
-    fillEl.style.width = c.percent.toFixed(2) + '%';
-    fillEl.className = 'fill' + (c.percent > 50 ? ' danger' : c.percent > 25 ? ' warn' : '');
-    document.getElementById('projName').textContent = c.displayName + '  —  ' + c.workspacePath;
-    const peakPctEl = document.getElementById('peakPct');
-    peakPctEl.style.color = pctColor(c.peak.percent || 0);
-    animateNum(document.getElementById('el'), c.exposedLines);
-    animateNum(document.getElementById('tl'), c.totalLines);
-    animateNum(document.getElementById('ef'), c.exposedFiles);
-    animateNum(document.getElementById('tf'), c.totalFiles);
-    document.getElementById('peakPct').textContent  = (c.peak.percent || 0).toFixed(1) + '%';
-    animateNum(document.getElementById('peakLines'), c.peak.exposedLines);
-    animateNum(document.getElementById('senCount'), c.sensitiveExposedFiles || 0);
-    animateNum(document.getElementById('senPeak'),  c.sensitivePeak?.count || 0);
-    const peakMark = document.getElementById('peakMark');
-    if (c.peak.percent > c.percent) {
-      peakMark.style.display = 'block';
-      peakMark.style.left = Math.min(99.5, c.peak.percent).toFixed(2) + '%';
-      peakMark.title = 'Peak ' + c.peak.percent.toFixed(1) + '%';
-    } else {
-      peakMark.style.display = 'none';
+    const curPath = state.current ? state.current.workspacePath : null;
+    const catLabel = (c) => c === 'credential' ? 'PASS' : c.toUpperCase();
+    const frag = document.createDocumentFragment();
+    for (const p of projs) {
+      const sec = document.createElement('div'); sec.className = 'sen-group';
+      const head = document.createElement('div'); head.className = 'sen-group-head';
+      const nm = document.createElement('span'); nm.textContent = p.displayName;
+      const cnt = document.createElement('span'); cnt.className = 'cnt'; cnt.textContent = p.sensitiveFiles.length + ' file(s)';
+      head.appendChild(nm); head.appendChild(cnt);
+      if (curPath === p.workspacePath) { const cur = document.createElement('span'); cur.className = 'cur'; cur.textContent = 'current'; head.appendChild(cur); }
+      sec.appendChild(head);
+      for (const f of p.sensitiveFiles) {
+        const row = document.createElement('div'); row.className = 'sen-row';
+        const name = document.createElement('span'); name.className = 'sen-path';
+        name.textContent = f.rel; name.title = f.path + '\\n' + (f.risk || []).join(', ');
+        name.addEventListener('click', () => vscode.postMessage({ type: 'openSensitive', path: f.path }));
+        const badges = document.createElement('span'); badges.className = 'sen-badges';
+        (f.cats || []).forEach(c => { const b = document.createElement('span'); b.className = 'sen-badge ' + c; b.textContent = catLabel(c); badges.appendChild(b); });
+        const open = document.createElement('button'); open.className = 'secondary sen-open'; open.textContent = 'Open'; open.title = 'Open & highlight sensitive values';
+        open.addEventListener('click', () => vscode.postMessage({ type: 'openSensitive', path: f.path }));
+        row.appendChild(name); row.appendChild(badges); row.appendChild(open);
+        sec.appendChild(row);
+      }
+      frag.appendChild(sec);
     }
-    document.getElementById('peakBadge').textContent =
-      'Peak ' + (c.peak.percent || 0).toFixed(1) + '% — ' + ageLabel(c.peak.percentAt) + '. ' +
-      'Peak exposed lines ' + fmt(c.peak.exposedLines) + ' — ' + ageLabel(c.peak.exposedLinesAt) + '.';
+    host.appendChild(frag);
   }
 
   function renderProjects() {
@@ -506,10 +333,11 @@ function renderHtml(): string {
     body.innerHTML = '';
     foot.innerHTML = '';
     if (!state.projects.length) {
-      body.innerHTML = '<tr><td colspan="10" style="opacity:0.6; font-style:italic">No projects tracked yet.</td></tr>';
+      body.innerHTML = '<tr><td colspan="12" style="opacity:0.6; font-style:italic">No projects tracked yet.</td></tr>';
       return;
     }
-    let sumExposed = 0, sumTotal = 0, sumFiles = 0;
+    let sumExposed = 0, sumTotal = 0, sumFiles = 0, sumExposedFiles = 0;
+    let sumSec = 0, sumCred = 0, sumPii = 0;
     const curPath = state.current ? state.current.workspacePath : null;
     const frag = document.createDocumentFragment();
     for (const p of state.projects) {
@@ -517,28 +345,32 @@ function renderHtml(): string {
       sumExposed += p.exposedLines || 0;
       sumTotal   += p.totalLines   || 0;
       sumFiles   += p.totalFiles   || 0;
+      sumExposedFiles += p.exposedFiles || 0;
+      const cat = p.sensitiveByCategory || { secret: 0, credential: 0, pii: 0 };
+      sumSec  += cat.secret     || 0;
+      sumCred += cat.credential || 0;
+      sumPii  += cat.pii        || 0;
       const tr = document.createElement('tr');
-      if (isCurrent) tr.className = 'current';
+      tr.className = isCurrent ? 'current' : '';
       const minBarPct = (p.percent || 0).toFixed(2);
       const peakPct   = (p.peak ? p.peak.percent : 0) || 0;
       const peakLeft  = Math.min(99, peakPct).toFixed(2);
       const rowColor = pctColor(p.percent || 0);
       const peakColor = pctColor(peakPct);
       const miniClass = ((p.percent || 0) > 50) ? ' danger' : ((p.percent || 0) > 25) ? ' warn' : '';
+      const senCss = (n) => n > 0 ? 'color:#f44747; font-weight:700; cursor:pointer; text-decoration:underline dotted' : 'opacity:0.4';
+      const senAttr = (catName, n) => isCurrent && n > 0 ? ' data-cat="' + catName + '" title="Click to review ' + catName + ' files"' : '';
       tr.innerHTML =
-        '<td class="dot" style="' + (rowColor ? 'color:' + rowColor : '') + '">' + (isCurrent ? '●' : '○') + '</td>' +
         '<td style="' + (rowColor ? 'color:' + rowColor : '') + '" title="' + escapeAttr(p.workspacePath) + '">' + escapeHtml(p.displayName) + '</td>' +
-        '<td>' +
-          '<span class="miniBar">' +
-            '<span class="miniFill' + miniClass + '" style="width:' + minBarPct + '%"></span>' +
-            (peakPct > (p.percent||0) ? '<span class="miniPeak" style="left:' + peakLeft + '%" title="Peak ' + peakPct.toFixed(1) + '%"></span>' : '') +
-          '</span>' +
-        '</td>' +
         '<td class="num" style="' + (rowColor ? 'color:' + rowColor : '') + '">' + (p.percent || 0).toFixed(1) + '%</td>' +
         '<td class="num" style="' + (peakColor ? 'color:' + peakColor : '') + '">' + peakPct.toFixed(1) + '%</td>' +
-        '<td class="num">' + fmt(p.exposedLines) + '</td>' +
+        '<td class="num" style="' + (rowColor ? 'color:' + rowColor : '') + '">' + fmt(p.exposedLines) + '</td>' +
         '<td class="num">' + fmt(p.totalLines) + '</td>' +
+        '<td class="num" style="' + (rowColor ? 'color:' + rowColor : '') + '">' + fmt(p.exposedFiles) + '</td>' +
         '<td class="num">' + fmt(p.totalFiles) + '</td>' +
+        '<td class="num" style="' + senCss(cat.secret)     + '"' + senAttr('secret', cat.secret)         + '>' + (cat.secret     || 0) + '</td>' +
+        '<td class="num" style="' + senCss(cat.credential) + '"' + senAttr('credential', cat.credential) + '>' + (cat.credential || 0) + '</td>' +
+        '<td class="num" style="' + senCss(cat.pii)        + '"' + senAttr('pii', cat.pii)               + '>' + (cat.pii        || 0) + '</td>' +
         '<td>' + ageLabel(p.lastSeen) + '</td>' +
         '<td class="action">' + (isCurrent ? '' : '<button class="secondary" data-path="' + escapeAttr(p.workspacePath) + '" title="Forget this project">×</button>') + '</td>';
       frag.appendChild(tr);
@@ -547,16 +379,22 @@ function renderHtml(): string {
     body.querySelectorAll('button[data-path]').forEach(b => {
       b.addEventListener('click', () => vscode.postMessage({ type: 'forget', path: b.dataset.path }));
     });
+    body.querySelectorAll('td[data-cat]').forEach((c) => {
+      c.addEventListener('click', () => vscode.postMessage({ type: 'reviewCategory', category: c.dataset.cat }));
+    });
     const overall = sumTotal ? (sumExposed / sumTotal) * 100 : 0;
     foot.innerHTML =
       '<tr style="font-weight:600; border-top:2px solid var(--vscode-panel-border)">' +
-        '<td></td><td>Total (' + state.projects.length + ' projects)</td>' +
+        '<td>Total (' + state.projects.length + ' projects)</td>' +
+        '<td class="num" style="' + (pctColor(overall) ? 'color:' + pctColor(overall) : '') + '">' + overall.toFixed(1) + '%</td>' +
         '<td></td>' +
-        '<td class="num">' + overall.toFixed(1) + '%</td>' +
-        '<td></td>' +
-        '<td class="num">' + fmt(sumExposed) + '</td>' +
+        '<td class="num" style="' + (pctColor(overall) ? 'color:' + pctColor(overall) : '') + '">' + fmt(sumExposed) + '</td>' +
         '<td class="num">' + fmt(sumTotal) + '</td>' +
+        '<td class="num" style="' + (pctColor(overall) ? 'color:' + pctColor(overall) : '') + '">' + fmt(sumExposedFiles) + '</td>' +
         '<td class="num">' + fmt(sumFiles) + '</td>' +
+        '<td class="num">' + sumSec + '</td>' +
+        '<td class="num">' + sumCred + '</td>' +
+        '<td class="num">' + sumPii + '</td>' +
         '<td></td><td></td>' +
       '</tr>';
   }
@@ -574,11 +412,10 @@ function renderHtml(): string {
     rows.slice(0, 500).forEach(r => {
       const tr = document.createElement('tr');
       if (r.exposed) tr.className = 'exposed';
-      const dot = document.createElement('td'); dot.className = 'dot'; dot.textContent = r.exposed ? '●' : '○';
       const path = document.createElement('td'); path.className = 'path'; path.textContent = r.rel; path.dataset.path = r.path;
       const num = document.createElement('td'); num.className = 'num'; num.textContent = r.lines.toLocaleString();
       path.addEventListener('click', () => vscode.postMessage({ type: 'open', path: r.path }));
-      tr.appendChild(dot); tr.appendChild(path); tr.appendChild(num);
+      tr.appendChild(path); tr.appendChild(num);
       frag.appendChild(tr);
     });
     tbody.appendChild(frag);

@@ -1,7 +1,13 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { scanRiskByPath, scanRiskByContent, RiskFinding } from './secrets';
+import { scanRiskByPath, scanRiskByContent, RiskFinding, RiskCategory } from './secrets';
 import { detectAi, AiPresence } from './aiDetect';
+
+export interface SensitiveBreakdown {
+  secret: number;
+  credential: number;
+  pii: number;
+}
 
 interface FileEntry {
   lines: number;
@@ -13,6 +19,13 @@ export interface ProjectPeak {
   percentAt: number;       // epoch ms when this peak was reached
   exposedLines: number;
   exposedLinesAt: number;
+}
+
+export interface SensitiveFileRef {
+  path: string;            // absolute fs path
+  rel: string;             // path relative to its own project root
+  cats: RiskCategory[];    // distinct categories present
+  risk: string[];          // human-readable finding labels
 }
 
 export interface ProjectMetrics {
@@ -27,6 +40,8 @@ export interface ProjectMetrics {
   lastSeen: number;
   sensitiveExposedFiles: number;
   sensitivePeak: { count: number; at: number };
+  sensitiveByCategory: SensitiveBreakdown;
+  sensitiveFiles: SensitiveFileRef[];
   ai: AiPresence;
 }
 
@@ -49,6 +64,7 @@ export interface ActivityEvent {
 
 const PROJECTS_KEY = 'aiExposure.projects';
 const EXPOSED_FILES_KEY_PREFIX = 'aiExposure.exposedFiles:'; // per-workspace persisted set
+const TEST_DATA_KEY_PREFIX     = 'aiExposure.testDataFiles:'; // per-workspace persisted set
 const MAX_ACTIVITY = 80;
 
 export class ExposureTracker {
@@ -60,6 +76,7 @@ export class ExposureTracker {
 
   private fileIndex = new Map<string, FileEntry>();
   private exposed = new Set<string>();
+  private testData = new Set<string>();
   private changeDebounce = new Map<string, NodeJS.Timeout>();
   private recentActivity: ActivityEvent[] = [];
 
@@ -90,6 +107,11 @@ export class ExposureTracker {
     return wp ? EXPOSED_FILES_KEY_PREFIX + wp : null;
   }
 
+  private testDataKey(): string | null {
+    const wp = this.workspacePath;
+    return wp ? TEST_DATA_KEY_PREFIX + wp : null;
+  }
+
   async init(): Promise<void> {
     if (this.persistEnabled()) {
       const key = this.storageKey();
@@ -97,6 +119,11 @@ export class ExposureTracker {
         const saved = this.context.globalState.get<string[]>(key, []);
         for (const p of saved) this.exposed.add(p);
       }
+    }
+    const tdKey = this.testDataKey();
+    if (tdKey) {
+      const td = this.context.globalState.get<string[]>(tdKey, []);
+      for (const p of td) this.testData.add(p);
     }
     await this.rescan();
   }
@@ -141,9 +168,63 @@ export class ExposureTracker {
     this.exposed.add(fsPath);
     this.persistExposed();
     this.persistMetrics();
-    const risk = entry.risk?.map((r) => r.pattern);
+    const risk = !this.testData.has(fsPath) ? entry.risk?.map((r) => r.pattern) : undefined;
     this.pushActivity({ type: 'exposed', path: fsPath, rel: this.relPath(fsPath), lines: entry.lines, ts: Date.now(), risk });
     this._onChange.fire();
+  }
+
+  async markAsTestData(fsPath: string): Promise<void> {
+    if (this.testData.has(fsPath)) return;
+    this.testData.add(fsPath);
+    this.persistTestData();
+    this.persistMetrics();
+    this._onChange.fire();
+  }
+
+  async unmarkTestData(fsPath: string): Promise<void> {
+    if (!this.testData.delete(fsPath)) return;
+    this.persistTestData();
+    this.persistMetrics();
+    this._onChange.fire();
+  }
+
+  isTestData(fsPath: string): boolean {
+    return this.testData.has(fsPath);
+  }
+
+  getRiskFor(fsPath: string): RiskFinding[] | undefined {
+    return this.fileIndex.get(fsPath)?.risk;
+  }
+
+  isSensitive(fsPath: string): boolean {
+    if (this.testData.has(fsPath)) return false;
+    const e = this.fileIndex.get(fsPath);
+    return !!(e && e.risk && e.risk.length > 0);
+  }
+
+  sensitiveFilesAll(): { path: string; risk: RiskFinding[] }[] {
+    const out: { path: string; risk: RiskFinding[] }[] = [];
+    for (const [p, e] of this.fileIndex) {
+      if (this.testData.has(p)) continue;
+      if (e.risk && e.risk.length > 0) out.push({ path: p, risk: e.risk });
+    }
+    return out;
+  }
+
+  sensitiveFilesByCategory(category: RiskCategory): { path: string; risk: RiskFinding[] }[] {
+    return this.sensitiveFilesAll().filter((f) => f.risk.some((r) => r.category === category));
+  }
+
+  async clearTestData(): Promise<void> {
+    if (this.testData.size === 0) return;
+    this.testData.clear();
+    this.persistTestData();
+    this.persistMetrics();
+    this._onChange.fire();
+  }
+
+  testDataList(): string[] {
+    return [...this.testData];
   }
 
   async reset(): Promise<void> {
@@ -229,6 +310,7 @@ export class ExposureTracker {
   sensitiveExposedCount(): number {
     let n = 0;
     for (const p of this.exposed) {
+      if (this.testData.has(p)) continue;
       const e = this.fileIndex.get(p);
       if (e && e.risk && e.risk.length > 0) n++;
     }
@@ -238,11 +320,55 @@ export class ExposureTracker {
   sensitiveExposedList(limit = 50): { path: string; risk: string[] }[] {
     const out: { path: string; risk: string[] }[] = [];
     for (const p of this.exposed) {
+      if (this.testData.has(p)) continue;
       const e = this.fileIndex.get(p);
       if (e && e.risk && e.risk.length > 0) {
         out.push({ path: p, risk: e.risk.map((r) => r.pattern) });
         if (out.length >= limit) break;
       }
+    }
+    return out;
+  }
+
+  sensitiveExposedListWithCategories(limit = 50): { path: string; cats: RiskCategory[] }[] {
+    const out: { path: string; cats: RiskCategory[] }[] = [];
+    for (const p of this.exposed) {
+      if (this.testData.has(p)) continue;
+      const e = this.fileIndex.get(p);
+      if (e && e.risk && e.risk.length > 0) {
+        const cats: RiskCategory[] = [];
+        const seen = new Set<RiskCategory>();
+        for (const r of e.risk) if (!seen.has(r.category)) { seen.add(r.category); cats.push(r.category); }
+        out.push({ path: p, cats });
+        if (out.length >= limit) break;
+      }
+    }
+    return out;
+  }
+
+  sensitiveFileRefs(limit = 200): SensitiveFileRef[] {
+    const out: SensitiveFileRef[] = [];
+    for (const f of this.sensitiveFilesAll()) {
+      const cats: RiskCategory[] = [];
+      const seen = new Set<RiskCategory>();
+      for (const r of f.risk) if (!seen.has(r.category)) { seen.add(r.category); cats.push(r.category); }
+      out.push({ path: f.path, rel: this.relPath(f.path), cats, risk: f.risk.map((r) => r.pattern) });
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+
+  sensitiveByCategory(): SensitiveBreakdown {
+    const out: SensitiveBreakdown = { secret: 0, credential: 0, pii: 0 };
+    for (const p of this.exposed) {
+      if (this.testData.has(p)) continue;
+      const e = this.fileIndex.get(p);
+      if (!e || !e.risk || e.risk.length === 0) continue;
+      const cats = new Set<RiskCategory>();
+      for (const r of e.risk) cats.add(r.category);
+      if (cats.has('secret'))     out.secret++;
+      if (cats.has('credential')) out.credential++;
+      if (cats.has('pii'))        out.pii++;
     }
     return out;
   }
@@ -296,6 +422,8 @@ export class ExposureTracker {
       lastSeen: Date.now(),
       sensitiveExposedFiles: sensitive,
       sensitivePeak,
+      sensitiveByCategory: this.sensitiveByCategory(),
+      sensitiveFiles: this.sensitiveFileRefs(),
       ai: detectAi(),
     };
   }
@@ -333,6 +461,12 @@ export class ExposureTracker {
     const key = this.storageKey();
     if (!key) return;
     void this.context.globalState.update(key, [...this.exposed]);
+  }
+
+  private persistTestData(): void {
+    const key = this.testDataKey();
+    if (!key) return;
+    void this.context.globalState.update(key, [...this.testData]);
   }
 
   private persistMetrics(): void {

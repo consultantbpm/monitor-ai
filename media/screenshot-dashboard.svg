@@ -1,146 +1,260 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" font-family="-apple-system, 'Segoe UI', system-ui, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" font-family="-apple-system, 'Segoe UI', system-ui, sans-serif">
   <defs>
     <linearGradient id="fillGrad" x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0%" stop-color="#4ec9b0"/>
-      <stop offset="100%" stop-color="#c586c0"/>
+      <stop offset="0%" stop-color="#f44747"/>
+      <stop offset="100%" stop-color="#d92020"/>
     </linearGradient>
-    <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0%" stop-color="#4ec9b0" stop-opacity="0.45"/>
-      <stop offset="100%" stop-color="#4ec9b0" stop-opacity="0"/>
+    <linearGradient id="orangeGrad" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#e8731a"/>
     </linearGradient>
   </defs>
 
-  <!-- background (VS Code editor bg) -->
-  <rect width="1280" height="800" fill="#1e1e1e"/>
+  <rect width="1280" height="900" fill="#1e1e1e"/>
 
-  <!-- Activity bar (left) -->
-  <rect x="0" y="0" width="48" height="800" fill="#252526"/>
-  <!-- 6 activity icons -->
+  <!-- Activity bar -->
+  <rect x="0" y="0" width="48" height="900" fill="#252526"/>
   <g fill="#858585">
     <rect x="14" y="24" width="20" height="20" rx="2"/>
     <rect x="14" y="64" width="20" height="20" rx="2"/>
     <rect x="14" y="104" width="20" height="20" rx="2"/>
     <rect x="14" y="144" width="20" height="20" rx="2"/>
   </g>
-  <!-- eye icon highlighted = AI Exposure activity -->
   <rect x="0" y="180" width="3" height="40" fill="#0098ff"/>
   <g transform="translate(24,200)" fill="#fff">
     <path d="M0 0c-6 0-11 4-13 8c2 4 7 8 13 8s11-4 13-8c-2-4-7-8-13-8zm0 13a5 5 0 1 1 0-10a5 5 0 0 1 0 10zm0-2.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5z" transform="translate(-12,-8)"/>
   </g>
 
-  <!-- title bar / tabs area -->
+  <!-- title bar -->
   <rect x="48" y="0" width="1232" height="36" fill="#252526"/>
   <text x="68" y="22" fill="#cccccc" font-size="12">AI Code Exposure Dashboard</text>
 
-  <!-- Main content area starts at y=36 -->
-  <g transform="translate(72, 60)">
-
-    <!-- Heading -->
+  <g transform="translate(72, 56)">
     <text x="0" y="18" fill="#cccccc" font-size="18" font-weight="600">AI Code Exposure Dashboard</text>
+    <text x="0" y="38" fill="#9aa4b2" font-size="11">Current project details, sparkline, and sensitive files are in the AI Code Exposure sidebar (eye icon).</text>
 
-    <!-- Big percentage -->
-    <text x="0" y="86" fill="#e8e8e8" font-size="56" font-weight="700" font-family="'Segoe UI', system-ui">37.4%</text>
+    <text x="0" y="72" fill="#cccccc" font-size="14" font-weight="600">All projects</text>
+    <text x="0" y="88" fill="#7a8290" font-size="10">Every workspace this extension has seen. Peaks retained across restarts. Sorted by current exposure %.</text>
 
-    <!-- Progress bar -->
-    <rect x="0" y="106" width="700" height="18" rx="9" fill="#3c3c3c"/>
-    <rect x="0" y="106" width="261.8" height="18" rx="9" fill="url(#fillGrad)"/>
-    <!-- peak mark at 62% -->
-    <rect x="434" y="104" width="2" height="22" fill="#cccccc" opacity="0.6"/>
+    <rect x="0" y="100" width="120" height="26" rx="2" fill="#3a3d41"/>
+    <text x="60" y="118" fill="#fff" font-size="11" text-anchor="middle">Reset all peaks</text>
 
-    <text x="0" y="146" fill="#aaaaaa" font-size="13">Peak 62.0% — 4h ago. Peak exposed lines 14,832 — 4h ago.</text>
-
-    <!-- Stats grid -->
-    <g transform="translate(0, 168)" font-size="13" fill="#cccccc">
-      <text x="0"   y="0">Project</text>     <text x="180" y="0" fill="#e8e8e8">monitor-ai — c:\AN\ai-code-exposure-monitor</text>
-      <text x="0"   y="22">Exposed lines</text> <text x="180" y="22" fill="#e8e8e8" font-weight="600">8,941</text>
-      <text x="0"   y="44">Total lines</text>   <text x="180" y="44" fill="#e8e8e8" font-weight="600">23,907</text>
-      <text x="0"   y="66">Exposed files</text> <text x="180" y="66" fill="#e8e8e8" font-weight="600">47</text>
-      <text x="0"   y="88">Total files</text>   <text x="180" y="88" fill="#e8e8e8" font-weight="600">182</text>
-      <text x="0"   y="110">Peak %</text>       <text x="180" y="110" fill="#e8e8e8" font-weight="600">62.0%</text>
-      <text x="0"   y="132">Peak exposed lines</text><text x="180" y="132" fill="#e8e8e8" font-weight="600">14,832</text>
+    <!-- Table header -->
+    <g transform="translate(0, 144)">
+      <rect x="0" y="0" width="1136" height="32" fill="#252526"/>
+      <line x1="0" y1="32" x2="1136" y2="32" stroke="#3c3c3c"/>
+      <g font-size="11" fill="#9aa4b2" letter-spacing="0.3">
+        <text x="0"    y="20">Project</text>
+        <text x="330"  y="20" text-anchor="end">Now %</text>
+        <text x="410"  y="20" text-anchor="end">Peak %</text>
+        <text x="510"  y="20" text-anchor="end">Exposed L</text>
+        <text x="600"  y="20" text-anchor="end">Total L</text>
+        <text x="688"  y="20" text-anchor="end">Exposed F</text>
+        <text x="752"  y="20" text-anchor="end">Files</text>
+        <text x="838"  y="20" text-anchor="end" fill="#f44747" font-weight="600">Secrets</text>
+        <text x="908"  y="20" text-anchor="end" fill="#f44747" font-weight="600">Pass</text>
+        <text x="968"  y="20" text-anchor="end" fill="#f44747" font-weight="600">PII</text>
+        <text x="1040" y="20">Last seen</text>
+      </g>
     </g>
 
-    <!-- Buttons -->
-    <g transform="translate(0, 322)">
-      <rect x="0" y="0" width="156" height="28" rx="2" fill="#0e639c"/>
-      <text x="78" y="19" fill="#fff" font-size="13" text-anchor="middle">Rescan workspace</text>
-      <rect x="166" y="0" width="120" height="28" rx="2" fill="#3a3d41"/>
-      <text x="226" y="19" fill="#fff" font-size="13" text-anchor="middle">Reset session</text>
-      <rect x="296" y="0" width="130" height="28" rx="2" fill="#3a3d41"/>
-      <text x="361" y="19" fill="#fff" font-size="13" text-anchor="middle">Reset all peaks</text>
+    <!-- Rows -->
+    <g transform="translate(0, 176)" font-size="12">
+      <!-- Row: monitor-ai (current, 79%) -->
+      <g transform="translate(0, 0)">
+        <text x="0"    y="20" fill="#f44747" font-weight="600">monitor-ai</text>
+        <text x="330"  y="20" fill="#f44747" font-weight="600" text-anchor="end">79.2%</text>
+        <text x="410"  y="20" fill="#f44747" font-weight="600" text-anchor="end">85.7%</text>
+        <text x="510"  y="20" fill="#f44747" text-anchor="end">8,941</text>
+        <text x="600"  y="20" fill="#ccc" text-anchor="end">11,287</text>
+        <text x="688"  y="20" fill="#f44747" text-anchor="end">47</text>
+        <text x="752"  y="20" fill="#ccc" text-anchor="end">59</text>
+        <text x="838"  y="20" fill="#f44747" font-weight="700" text-anchor="end">3</text>
+        <text x="908"  y="20" fill="#f44747" font-weight="700" text-anchor="end">2</text>
+        <text x="968"  y="20" fill="#f44747" font-weight="700" text-anchor="end">1</text>
+        <text x="1040" y="20" fill="#aaa">just now</text>
+        <line x1="0" y1="30" x2="1136" y2="30" stroke="#2d2d30"/>
+      </g>
+
+      <!-- Row: payments-api (88%, red) -->
+      <g transform="translate(0, 36)">
+        <text x="0"    y="20" fill="#f44747">payments-api</text>
+        <text x="330"  y="20" fill="#f44747" font-weight="600" text-anchor="end">88.4%</text>
+        <text x="410"  y="20" fill="#f44747" font-weight="600" text-anchor="end">88.4%</text>
+        <text x="510"  y="20" fill="#f44747" text-anchor="end">14,832</text>
+        <text x="600"  y="20" fill="#ccc" text-anchor="end">16,768</text>
+        <text x="688"  y="20" fill="#f44747" text-anchor="end">74</text>
+        <text x="752"  y="20" fill="#ccc" text-anchor="end">82</text>
+        <text x="838"  y="20" fill="#f44747" font-weight="700" text-anchor="end">5</text>
+        <text x="908"  y="20" fill="#f44747" font-weight="700" text-anchor="end">3</text>
+        <text x="968"  y="20" fill="#f44747" font-weight="700" text-anchor="end">4</text>
+        <text x="1040" y="20" fill="#aaa">2h ago</text>
+        <line x1="0" y1="30" x2="1136" y2="30" stroke="#2d2d30"/>
+      </g>
+
+      <!-- Row: customer-data-svc (62%, red) -->
+      <g transform="translate(0, 72)">
+        <text x="0"    y="20" fill="#f44747">customer-data-svc</text>
+        <text x="330"  y="20" fill="#f44747" font-weight="600" text-anchor="end">62.0%</text>
+        <text x="410"  y="20" fill="#f44747" font-weight="600" text-anchor="end">71.3%</text>
+        <text x="510"  y="20" fill="#f44747" text-anchor="end">5,402</text>
+        <text x="600"  y="20" fill="#ccc" text-anchor="end">8,712</text>
+        <text x="688"  y="20" fill="#f44747" text-anchor="end">30</text>
+        <text x="752"  y="20" fill="#ccc" text-anchor="end">38</text>
+        <text x="838"  y="20" fill="#f44747" font-weight="700" text-anchor="end">1</text>
+        <text x="908"  y="20" fill="#f44747" font-weight="700" text-anchor="end">2</text>
+        <text x="968"  y="20" fill="#f44747" font-weight="700" text-anchor="end">7</text>
+        <text x="1040" y="20" fill="#aaa">5h ago</text>
+        <line x1="0" y1="30" x2="1136" y2="30" stroke="#2d2d30"/>
+      </g>
+
+      <!-- Row: dashboard-ui (38%, orange) -->
+      <g transform="translate(0, 108)">
+        <text x="0"    y="20" fill="#e8731a">dashboard-ui</text>
+        <text x="330"  y="20" fill="#e8731a" font-weight="600" text-anchor="end">38.0%</text>
+        <text x="410"  y="20" fill="#e8731a" font-weight="600" text-anchor="end">44.2%</text>
+        <text x="510"  y="20" fill="#e8731a" text-anchor="end">3,402</text>
+        <text x="600"  y="20" fill="#ccc" text-anchor="end">8,950</text>
+        <text x="688"  y="20" fill="#e8731a" text-anchor="end">28</text>
+        <text x="752"  y="20" fill="#ccc" text-anchor="end">52</text>
+        <text x="838"  y="20" fill="#ccc" opacity="0.4" text-anchor="end">0</text>
+        <text x="908"  y="20" fill="#ccc" opacity="0.4" text-anchor="end">0</text>
+        <text x="968"  y="20" fill="#f44747" font-weight="700" text-anchor="end">1</text>
+        <text x="1040" y="20" fill="#aaa">1d ago</text>
+        <line x1="0" y1="30" x2="1136" y2="30" stroke="#2d2d30"/>
+      </g>
+
+      <!-- Row: docs-site (12%, default) -->
+      <g transform="translate(0, 144)">
+        <text x="0"    y="20" fill="#ccc">docs-site</text>
+        <text x="330"  y="20" fill="#ccc" text-anchor="end">12.0%</text>
+        <text x="410"  y="20" fill="#ccc" text-anchor="end">18.4%</text>
+        <text x="510"  y="20" fill="#ccc" text-anchor="end">1,402</text>
+        <text x="600"  y="20" fill="#ccc" text-anchor="end">11,650</text>
+        <text x="688"  y="20" fill="#ccc" text-anchor="end">9</text>
+        <text x="752"  y="20" fill="#ccc" text-anchor="end">73</text>
+        <text x="838"  y="20" fill="#ccc" opacity="0.4" text-anchor="end">0</text>
+        <text x="908"  y="20" fill="#ccc" opacity="0.4" text-anchor="end">0</text>
+        <text x="968"  y="20" fill="#ccc" opacity="0.4" text-anchor="end">0</text>
+        <text x="1040" y="20" fill="#aaa">3d ago</text>
+        <line x1="0" y1="30" x2="1136" y2="30" stroke="#2d2d30"/>
+      </g>
+
+      <!-- Totals row -->
+      <g transform="translate(0, 180)">
+        <text x="0"   y="20" fill="#ccc" font-weight="700">Total (5 projects)</text>
+        <text x="330" y="20" fill="#f44747" font-weight="700" text-anchor="end">56.0%</text>
+        <text x="510" y="20" fill="#f44747" font-weight="700" text-anchor="end">33,979</text>
+        <text x="600" y="20" fill="#ccc" font-weight="700" text-anchor="end">57,367</text>
+        <text x="688" y="20" fill="#f44747" font-weight="700" text-anchor="end">188</text>
+        <text x="752" y="20" fill="#ccc" font-weight="700" text-anchor="end">304</text>
+        <text x="838" y="20" fill="#f44747" font-weight="700" text-anchor="end">9</text>
+        <text x="908" y="20" fill="#f44747" font-weight="700" text-anchor="end">7</text>
+        <text x="968" y="20" fill="#f44747" font-weight="700" text-anchor="end">13</text>
+      </g>
     </g>
 
-    <!-- Live monitor card -->
-    <g transform="translate(0, 376)">
-      <rect x="0" y="0" width="1136" height="280" rx="6" fill="#252526" stroke="#3c3c3c"/>
-      <!-- Header -->
-      <g transform="translate(16, 22)">
-        <text x="0" y="0" fill="#858585" font-size="11">▾</text>
-        <!-- Heartbeat dot -->
-        <circle cx="22" cy="-4" r="5" fill="#4ec9b0"/>
-        <circle cx="22" cy="-4" r="9" fill="none" stroke="#4ec9b0" stroke-opacity="0.35" stroke-width="1"/>
-        <text x="38" y="0" fill="#a0a0a0" font-size="11" letter-spacing="1.4">LIVE MONITOR</text>
-        <text x="1100" y="0" fill="#888" font-size="11" text-anchor="end">2s ago</text>
+    <!-- PSDE section -->
+    <text x="0" y="424" fill="#cccccc" font-size="14" font-weight="600">🛡 PSDE — Proactive Sensitive Data Exposure</text>
+    <text x="0" y="442" fill="#7a8290" font-size="10">Files containing secrets, credentials, or PII that AI tools could read once opened. Click a file (or Open) to inspect it — sensitive values are highlighted inline. Grouped by project.</text>
+
+    <!-- toolbar -->
+    <g transform="translate(0, 456)">
+      <rect x="0" y="0" width="120" height="26" rx="2" fill="#1f6f4a"/>
+      <text x="60" y="18" fill="#fff" font-size="11" text-anchor="middle" font-weight="700">🛡 PSDE: ON (4)</text>
+      <rect x="130" y="0" width="130" height="26" rx="2" fill="#3a3d41"/>
+      <text x="195" y="18" fill="#fff" font-size="11" text-anchor="middle">Review sensitive</text>
+      <text x="276" y="18" fill="#7a8290" font-size="10">· protecting 4 file(s) — AI is blocked from silently seeing them</text>
+    </g>
+
+    <!-- group: monitor-ai -->
+    <g transform="translate(0, 494)">
+      <rect x="0" y="0" width="700" height="138" rx="6" fill="none" stroke="#3c3c3c"/>
+      <rect x="0" y="0" width="700" height="28" fill="#252526"/>
+      <text x="12" y="19" fill="#ccc" font-size="11" font-weight="600">monitor-ai</text>
+      <text x="92" y="19" fill="#7a8290" font-size="10">4 file(s)</text>
+      <text x="688" y="19" fill="#7a8290" font-size="9" text-anchor="end" letter-spacing="0.6">CURRENT</text>
+
+      <!-- rows -->
+      <g font-size="11">
+        <!-- .env -->
+        <g transform="translate(0, 28)">
+          <line x1="0" y1="0" x2="700" y2="0" stroke="#2d2d30"/>
+          <text x="12" y="18" fill="#f44747" font-weight="600">.env</text>
+          <g transform="translate(470, 6)">
+            <rect x="0" y="0" width="56" height="16" rx="3" fill="rgba(245,124,0,0.18)"/>
+            <text x="28" y="12" fill="#ffb74d" font-size="9" font-weight="700" text-anchor="middle">PASS</text>
+          </g>
+          <rect x="636" y="4" width="52" height="18" rx="2" fill="#3a3d41"/>
+          <text x="662" y="17" fill="#fff" font-size="10" text-anchor="middle">Open</text>
+        </g>
+        <!-- credentials.json -->
+        <g transform="translate(0, 55)">
+          <line x1="0" y1="0" x2="700" y2="0" stroke="#2d2d30"/>
+          <text x="12" y="18" fill="#f44747" font-weight="600">config/credentials.json</text>
+          <g transform="translate(404, 6)">
+            <rect x="0" y="0" width="62" height="16" rx="3" fill="rgba(229,57,53,0.18)"/>
+            <text x="31" y="12" fill="#e57373" font-size="9" font-weight="700" text-anchor="middle">SECRET</text>
+            <rect x="68" y="0" width="56" height="16" rx="3" fill="rgba(245,124,0,0.18)"/>
+            <text x="96" y="12" fill="#ffb74d" font-size="9" font-weight="700" text-anchor="middle">PASS</text>
+          </g>
+          <rect x="636" y="4" width="52" height="18" rx="2" fill="#3a3d41"/>
+          <text x="662" y="17" fill="#fff" font-size="10" text-anchor="middle">Open</text>
+        </g>
+        <!-- keys.ts -->
+        <g transform="translate(0, 82)">
+          <line x1="0" y1="0" x2="700" y2="0" stroke="#2d2d30"/>
+          <text x="12" y="18" fill="#f44747" font-weight="600">src/auth/keys.ts</text>
+          <g transform="translate(464, 6)">
+            <rect x="0" y="0" width="62" height="16" rx="3" fill="rgba(229,57,53,0.18)"/>
+            <text x="31" y="12" fill="#e57373" font-size="9" font-weight="700" text-anchor="middle">SECRET</text>
+          </g>
+          <rect x="636" y="4" width="52" height="18" rx="2" fill="#3a3d41"/>
+          <text x="662" y="17" fill="#fff" font-size="10" text-anchor="middle">Open</text>
+        </g>
+        <!-- sample-secrets.txt -->
+        <g transform="translate(0, 109)">
+          <line x1="0" y1="0" x2="700" y2="0" stroke="#2d2d30"/>
+          <text x="12" y="18" fill="#f44747" font-weight="600">test-fixtures/sample-secrets.txt</text>
+          <g transform="translate(338, 6)">
+            <rect x="0" y="0" width="62" height="16" rx="3" fill="rgba(229,57,53,0.18)"/>
+            <text x="31" y="12" fill="#e57373" font-size="9" font-weight="700" text-anchor="middle">SECRET</text>
+            <rect x="68" y="0" width="56" height="16" rx="3" fill="rgba(245,124,0,0.18)"/>
+            <text x="96" y="12" fill="#ffb74d" font-size="9" font-weight="700" text-anchor="middle">PASS</text>
+            <rect x="130" y="0" width="44" height="16" rx="3" fill="rgba(251,192,45,0.18)"/>
+            <text x="152" y="12" fill="#fdd835" font-size="9" font-weight="700" text-anchor="middle">PII</text>
+          </g>
+          <rect x="636" y="4" width="52" height="18" rx="2" fill="#3a3d41"/>
+          <text x="662" y="17" fill="#fff" font-size="10" text-anchor="middle">Open</text>
+        </g>
       </g>
+    </g>
 
-      <!-- Sparkline -->
-      <g transform="translate(16, 50)">
-        <rect x="0" y="0" width="780" height="160" rx="4" fill="#1e1e1e"/>
-        <!-- Live sparkline path -->
-        <path fill="url(#sparkFill)" d="M0,140 L20,135 L40,130 L60,125 L80,118 L100,120 L120,115 L140,108 L160,105 L180,98 L200,92 L220,85 L240,82 L260,78 L280,72 L300,68 L320,65 L340,62 L360,58 L380,54 L400,50 L420,48 L440,46 L460,42 L480,40 L500,38 L520,36 L540,34 L560,32 L580,30 L600,28 L620,28 L640,30 L660,32 L680,31 L700,29 L720,28 L740,27 L760,26 L780,26 L780,160 L0,160 Z"/>
-        <path fill="none" stroke="#4ec9b0" stroke-width="1.6" d="M0,140 L20,135 L40,130 L60,125 L80,118 L100,120 L120,115 L140,108 L160,105 L180,98 L200,92 L220,85 L240,82 L260,78 L280,72 L300,68 L320,65 L340,62 L360,58 L380,54 L400,50 L420,48 L440,46 L460,42 L480,40 L500,38 L520,36 L540,34 L560,32 L580,30 L600,28 L620,28 L640,30 L660,32 L680,31 L700,29 L720,28 L740,27 L760,26 L780,26"/>
-        <text x="0" y="178" fill="#888" font-size="10">% AI exposure · last 60s (1 sample/s)</text>
-        <text x="780" y="178" fill="#888" font-size="10" text-anchor="end">min 21.8% · max 37.4%</text>
-      </g>
-
-      <!-- Activity feed -->
-      <g transform="translate(820, 50)" font-size="12.5" fill="#cccccc">
-        <text x="0" y="0" fill="#a0a0a0" font-size="10" letter-spacing="1.2">ACTIVITY FEED</text>
-
-        <g transform="translate(0, 18)">
-          <text x="0" y="0" fill="#4ec9b0">●</text>
-          <text x="14" y="0">src/exposureTracker.ts</text>
-          <text x="300" y="0" fill="#7a7a7a" text-anchor="end">264 L · 2s ago</text>
-        </g>
-        <g transform="translate(0, 38)">
-          <text x="0" y="0" fill="#569cd6">✎</text>
-          <text x="14" y="0">src/dashboard.ts</text>
-          <text x="300" y="0" fill="#7a7a7a" text-anchor="end">+12 L · 15s ago</text>
-        </g>
-        <g transform="translate(0, 58)">
-          <text x="0" y="0" fill="#4ec9b0">●</text>
-          <text x="14" y="0">src/currentProjectView.ts</text>
-          <text x="300" y="0" fill="#7a7a7a" text-anchor="end">218 L · 31s ago</text>
-        </g>
-        <g transform="translate(0, 78)">
-          <text x="0" y="0" fill="#c586c0">+</text>
-          <text x="14" y="0">media/screenshot-dashboard.svg</text>
-          <text x="300" y="0" fill="#7a7a7a" text-anchor="end">156 L · 1m ago</text>
-        </g>
-        <g transform="translate(0, 98)">
-          <text x="0" y="0" fill="#569cd6">✎</text>
-          <text x="14" y="0">README.md</text>
-          <text x="300" y="0" fill="#7a7a7a" text-anchor="end">+8 L · 2m ago</text>
-        </g>
-        <g transform="translate(0, 118)">
-          <text x="0" y="0" fill="#4ec9b0">●</text>
-          <text x="14" y="0">package.json</text>
-          <text x="300" y="0" fill="#7a7a7a" text-anchor="end">98 L · 3m ago</text>
-        </g>
-        <g transform="translate(0, 138)">
-          <text x="0" y="0" fill="#d7ba7d">↻</text>
-          <text x="14" y="0">workspace rescanned</text>
-          <text x="300" y="0" fill="#7a7a7a" text-anchor="end">23,907 L · 5m ago</text>
-        </g>
+    <!-- inline highlight preview (right of PSDE group) -->
+    <g transform="translate(724, 494)">
+      <rect x="0" y="0" width="412" height="138" rx="6" fill="#0e1116" stroke="#3c3c3c"/>
+      <text x="12" y="20" fill="#7a8290" font-size="10">test-fixtures/sample-secrets.txt — inline highlight</text>
+      <g font-family="var(--vscode-editor-font-family), Menlo, Consolas, monospace" font-size="11">
+        <text x="12" y="44" fill="#6a737d">aws_access_key_id =</text>
+        <rect x="150" y="33" width="172" height="15" rx="2" fill="rgba(229,57,53,0.22)" stroke="rgba(229,57,53,0.9)"/>
+        <text x="156" y="44" fill="#e57373">AKIAIOSFODNN7EXAMPLE</text>
+        <text x="12" y="66" fill="#6a737d">password =</text>
+        <rect x="86" y="55" width="98" height="15" rx="2" fill="rgba(245,124,0,0.22)" stroke="rgba(245,124,0,0.9)"/>
+        <text x="92" y="66" fill="#ffb74d">"hunter2pass"</text>
+        <text x="12" y="88" fill="#6a737d">contact_email =</text>
+        <rect x="122" y="77" width="158" height="15" rx="2" fill="rgba(251,192,45,0.22)" stroke="rgba(251,192,45,0.9)"/>
+        <text x="128" y="88" fill="#fdd835">john.doe@example.com</text>
+        <text x="12" y="110" fill="#6a737d">credit_card =</text>
+        <rect x="104" y="99" width="132" height="15" rx="2" fill="rgba(251,192,45,0.22)" stroke="rgba(251,192,45,0.9)"/>
+        <text x="110" y="110" fill="#fdd835">4111111111111111</text>
       </g>
     </g>
   </g>
 
-  <!-- Status bar (bottom) -->
-  <rect x="0" y="778" width="1280" height="22" fill="#007acc"/>
-  <text x="12" y="794" fill="#fff" font-size="12">⎇ main</text>
-  <text x="80" y="794" fill="#fff" font-size="12">⨀ 0 ⚠ 0</text>
-  <!-- AI Exposure indicator highlighted -->
-  <rect x="1080" y="778" width="200" height="22" fill="#005a9e"/>
-  <text x="1094" y="794" fill="#fff" font-size="12">👁 AI exposure: 37.4%</text>
+  <!-- Status bar -->
+  <rect x="0" y="878" width="1280" height="22" fill="#007acc"/>
+  <text x="12" y="894" fill="#fff" font-size="12">⎇ main</text>
+  <text x="80" y="894" fill="#fff" font-size="12">⨀ 0 ⚠ 0</text>
+  <rect x="1080" y="878" width="200" height="22" fill="#005a9e"/>
+  <text x="1094" y="894" fill="#fff" font-size="12" font-weight="600">👁 AI exposure: 79.2%</text>
 </svg>

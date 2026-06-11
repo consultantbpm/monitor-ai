@@ -1,21 +1,125 @@
-MIT License
+END USER LICENSE AGREEMENT (EULA)
+AI Code Exposure Monitor
 
-Copyright (c) 2026 consultantbpm
+Copyright (c) 2026 ConsultantBPM / humansoftware. All Rights Reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+IMPORTANT — READ CAREFULLY: This End User License Agreement ("Agreement")
+is a legal agreement between you (either an individual or a single legal
+entity, "You" or "Licensee") and ConsultantBPM / humansoftware (the
+"Licensor") for the AI Code Exposure Monitor extension, including any
+associated media, printed materials, electronic documentation, updates,
+and successor versions (collectively, the "Software").
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+By installing, copying, downloading, accessing, or otherwise using the
+Software, You agree to be bound by the terms of this Agreement. If You
+do not agree, do not install, copy, or use the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. GRANT OF LICENSE.
+   Licensor grants You a personal, non-exclusive, non-transferable,
+   revocable license to install and use the Software solely in object-code
+   form, on machines You own or control, for Your internal use, including
+   commercial internal use within Your organization. The Software may be
+   distributed to You only through the official Visual Studio Marketplace
+   (or other channels expressly authorized by Licensor in writing).
+
+2. RESERVATION OF RIGHTS; OWNERSHIP.
+   The Software is licensed, not sold. All right, title, and interest in
+   and to the Software, including all intellectual property rights, are
+   and shall remain the exclusive property of Licensor and its licensors.
+   No rights are granted by implication, estoppel, or otherwise other
+   than those expressly set forth herein.
+
+3. RESTRICTIONS.
+   You shall NOT, and shall not permit any third party to:
+   (a) copy, modify, adapt, translate, or create derivative works of the
+       Software, in whole or in part;
+   (b) reverse engineer, decompile, disassemble, or otherwise attempt to
+       derive the source code of the Software, except to the extent such
+       activity is expressly permitted by applicable law notwithstanding
+       this restriction;
+   (c) rent, lease, lend, sell, sublicense, assign, distribute, publish,
+       transfer, or otherwise make the Software available to any third
+       party;
+   (d) remove, alter, or obscure any proprietary notice (including any
+       copyright or trademark notice) of Licensor or its affiliates on or
+       in the Software;
+   (e) use the Software for the development, training, or improvement of
+       any competing product or service;
+   (f) circumvent or attempt to circumvent any technical limitation,
+       license check, or feature gate built into the Software;
+   (g) use the Software in any manner that violates applicable law or
+       third-party rights.
+
+4. UPDATES.
+   Licensor may, at its sole discretion, provide updates, upgrades, bug
+   fixes, or new versions of the Software. All such updates are governed
+   by this Agreement, unless accompanied by a separate license, in which
+   case the separate license shall control.
+
+5. TELEMETRY AND DATA.
+   The Software is designed to operate locally and does not transmit
+   workspace contents, file lists, secrets, credentials, personal
+   information, or telemetry to Licensor or any third party. If a future
+   version introduces optional telemetry, You will be notified and given
+   the ability to opt out.
+
+6. THIRD-PARTY COMPONENTS.
+   The Software may include open-source components distributed under
+   their own license terms. Such components remain subject to their
+   respective licenses; the restrictions of this Agreement do not
+   override licenses of third-party components.
+
+7. TERM AND TERMINATION.
+   This Agreement is effective until terminated. It will terminate
+   automatically without notice from Licensor if You fail to comply with
+   any provision. Upon termination, You must cease all use of the
+   Software and destroy all copies in Your possession or control.
+
+8. NO WARRANTY.
+   THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT
+   WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+   TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+   PURPOSE, NON-INFRINGEMENT, OR ACCURACY OF RESULTS. LICENSOR DOES NOT
+   WARRANT THAT THE SOFTWARE WILL DETECT ALL SENSITIVE CONTENT, SECRETS,
+   CREDENTIALS, OR PERSONAL INFORMATION, NOR THAT IT WILL PREVENT
+   EXPOSURE TO AI ASSISTANTS OR THIRD PARTIES. YOU ARE SOLELY
+   RESPONSIBLE FOR PROTECTING YOUR SOURCE CODE AND DATA.
+
+9. LIMITATION OF LIABILITY.
+   TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT WILL
+   LICENSOR OR ITS AFFILIATES BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+   SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS,
+   REVENUE, DATA, USE, OR GOODWILL, ARISING OUT OF OR RELATED TO THIS
+   AGREEMENT OR THE SOFTWARE, WHETHER BASED ON CONTRACT, TORT, STRICT
+   LIABILITY, OR OTHERWISE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+   DAMAGES. LICENSOR'S TOTAL CUMULATIVE LIABILITY UNDER THIS AGREEMENT
+   SHALL NOT EXCEED THE GREATER OF (i) THE AMOUNT YOU ACTUALLY PAID
+   LICENSOR FOR THE SOFTWARE IN THE TWELVE (12) MONTHS PRECEDING THE
+   CLAIM, OR (ii) FIFTY EUROS (€50).
+
+10. GOVERNING LAW.
+    This Agreement shall be governed by and construed in accordance
+    with the laws of Romania, without regard to its conflict-of-laws
+    rules. Any dispute arising out of or in connection with this
+    Agreement shall be submitted to the exclusive jurisdiction of the
+    courts of Romania.
+
+11. ENTIRE AGREEMENT.
+    This Agreement constitutes the entire agreement between You and
+    Licensor regarding the Software and supersedes all prior or
+    contemporaneous communications, proposals, or representations,
+    whether oral or written, regarding the Software.
+
+12. PRIOR VERSIONS.
+    Versions of the Software prior to 0.5.0 were distributed under the
+    MIT License. Such prior versions continue to be governed by the MIT
+    License as it applied at the time of their release; the terms of
+    this Agreement apply solely to version 0.5.0 and later.
+
+13. CONTACT.
+    For licensing inquiries (including commercial redistribution, MCP
+    server, team-aggregation features, or enterprise licensing), contact
+    the publisher via the Visual Studio Marketplace publisher page.
+
+By using the Software, You acknowledge that You have read this
+Agreement, understand it, and agree to be bound by its terms.

@@ -2,9 +2,9 @@
   "name": "ai-code-exposure-monitor",
   "displayName": "AI Code Exposure Monitor",
   "description": "Live % of your code seen by AI assistants. Detects secrets, passwords, PII exposed to AI tools (Copilot, Claude, Cursor, etc.). 100% local. Works in VS Code, Cursor, Windsurf, VSCodium. MCP + team-work exposure features ready — just ask.",
-  "version": "0.4.1",
+  "version": "0.6.0",
   "publisher": "ConsultantBPMhumansoftware",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "icon": "media/eye.png",
   "repository": {
     "type": "git",
@@ -46,12 +46,20 @@
     "secrets",
     "pii",
     "credentials",
+    "passwords",
+    "sensitive",
+    "instant alert",
+    "live alert",
     "leak",
     "context",
     "mcp",
     "team",
     "status bar",
-    "dashboard"
+    "dashboard",
+    "proactive",
+    "prevention",
+    "proactive protection",
+    "psde"
   ],
   "galleryBanner": {
     "color": "#0e1116",
@@ -83,6 +91,26 @@
       {
         "command": "aiExposure.rescan",
         "title": "AI Code Exposure: Rescan Workspace"
+      },
+      {
+        "command": "aiExposure.markCurrentAsTestData",
+        "title": "AI Code Exposure: Mark Current File as Test Data"
+      },
+      {
+        "command": "aiExposure.unmarkCurrentAsTestData",
+        "title": "AI Code Exposure: Remove Test-Data Flag from Current File"
+      },
+      {
+        "command": "aiExposure.clearTestData",
+        "title": "AI Code Exposure: Clear All Test-Data Flags"
+      },
+      {
+        "command": "aiExposure.toggleProactiveProtection",
+        "title": "AI Code Exposure: Toggle Proactive Protection (PSDE)"
+      },
+      {
+        "command": "aiExposure.reviewSensitive",
+        "title": "AI Code Exposure: Review Sensitive Files (PSDE)"
       }
     ],
     "viewsContainers": {
@@ -170,6 +198,26 @@
           "type": "boolean",
           "default": true,
           "description": "Show a live warning when a file containing secrets, credentials, or PII is opened (and therefore potentially exposed to AI tools)."
+        },
+        "aiExposure.sensitiveAlert.modal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the sensitive-data alert as a modal popup (blocks UI until dismissed). Disable for a less intrusive corner notification."
+        },
+        "aiExposure.proactiveProtection.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Proactive Sensitive Data Exposure (PSDE): block AI from seeing sensitive files until you explicitly confirm. Opens a modal every time a protected file is about to be exposed."
+        },
+        "aiExposure.proactiveProtection.reviewAfterScan": {
+          "type": "boolean",
+          "default": true,
+          "description": "When PSDE is on and a workspace scan finds sensitive files, immediately open a review picker so you can bulk-mark test fixtures."
+        },
+        "aiExposure.highlightSensitive.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight the exact secrets, credentials, and PII inside open editors with a colored marker and gutter icon."
         }
       }
     }

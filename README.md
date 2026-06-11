@@ -1,6 +1,6 @@
 # AI Code Exposure Monitor
 
-[![Install](https://img.shields.io/badge/install-marketplace-blue.png?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=ConsultantBPMhumansoftware.ai-code-exposure-monitor) [![License](https://img.shields.io/badge/license-MIT-yellow.png?style=flat-square)](LICENSE) [![Local](https://img.shields.io/badge/100%25-local-green.png?style=flat-square)]()
+[![Install](https://img.shields.io/badge/install-marketplace-blue.png?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=ConsultantBPMhumansoftware.ai-code-exposure-monitor) [![License](https://img.shields.io/badge/license-Proprietary-red.png?style=flat-square)](LICENSE) [![Local](https://img.shields.io/badge/100%25-local-green.png?style=flat-square)]()
 
 ![AI Code Exposure Monitor](media/hero.png)
 
@@ -20,6 +20,10 @@ Every time you open a file in your editor, it can be picked up by AI assistants 
 
 - 📊 **Live percentage in the status bar:** `👁 AI exposure: 37.4%` (colored — orange >25%, red >50%)
 - 🚨 **Live sensitive-file alert** — pops a warning when you open a file containing secrets (AWS/GCP keys, GitHub PATs, OpenAI/Anthropic keys, JWTs, private key blocks, DB URLs with credentials), hardcoded passwords/usernames, or PII (emails, SSN, credit cards, phone numbers, IBAN, date of birth)
+- 🖍 **Inline highlighting** — the exact secret/credential/PII bytes are highlighted right in the editor (🔴 secret · 🟠 credential · 🟡 PII), with overview-ruler markers and hover details, so you see precisely what an AI tool could read
+- 🛡 **PSDE (Proactive Sensitive Data Exposure)** — optional proactive mode: prescans the workspace, and *blocks* a sensitive file from being silently exposed to AI until you confirm (Expose anyway / Mark as test data / Close file)
+- 🗃 **Sensitive files by project** — a dashboard section listing every detected sensitive file, grouped by project, with category badges and one-click **Open** (opens + highlights, without tripping the PSDE prompt)
+- 🧪 **Mark as test data** — flag fixtures/sample files so they're excluded from sensitive counts (remembered across restarts)
 - 🤖 **AI assistants detected banner** — automatically detects Copilot, Claude Code, Cursor (native), Windsurf (native), Gemini, Codeium, Continue, Cline, Cody, pandō, etc.
 - 📈 **Live sparkline** of % over the last 60 seconds (1 sample/sec)
 - 📰 **Live activity feed** — file opened, modified, created, deleted, reset, rescan; sensitive files visually flagged
@@ -81,12 +85,14 @@ Compact panel with:
 
 ### Dashboard webview
 Larger view, opened from status bar click or from `AI Code Exposure: Show Dashboard`:
-- big % indicator + peak badge
-- collapsible **Live monitor** with full-width sparkline + detailed feed
-- **All projects** table — every workspace ever seen, with peaks, last-seen, current %
-- **Files (current project)** table — searchable, "only exposed" filter, click to open
+- **All projects** table — every workspace ever seen, ranked by current exposure %, with color-coded `Now %`, `Peak %`, `Exposed L` and `Exposed F` columns, plus per-project `Secrets` / `Pass` / `PII` counts
+- **🛡 PSDE — Proactive Sensitive Data Exposure** section — every detected sensitive file grouped by project, file paths in red with `SECRET` / `PASS` / `PII` badges, and one-click **Open** (opens + highlights inline). Toggle PSDE and bulk-**Review sensitive** right here.
+- **Files (current project)** table — searchable, "only exposed" filter, exposed paths in red, click to open
 
 ![Dashboard](media/screenshot-dashboard.png)
+
+### Inline highlighting
+Open any file and the exact sensitive values are highlighted in place — 🔴 secret, 🟠 credential, 🟡 PII — with overview-ruler markers and a hover that names the finding. Toggle with `aiExposure.highlightSensitive.enabled`.
 
 ### Sidebar (compact view)
 
@@ -103,6 +109,11 @@ Larger view, opened from status bar click or from `AI Code Exposure: Show Dashbo
 | `AI Code Exposure: Reset All Peaks` | Reset peaks for every tracked project |
 | `AI Code Exposure: Forget a Project…` | Remove a project entirely from history |
 | `AI Code Exposure: Rescan Workspace` | Re-index files after large changes |
+| `AI Code Exposure: Toggle Proactive Protection (PSDE)` | Turn proactive blocking of sensitive files on/off |
+| `AI Code Exposure: Review Sensitive Files (PSDE)` | Open the bulk picker to inspect / mark test-data |
+| `AI Code Exposure: Mark Current File as Test Data` | Exclude the active file from sensitive counts |
+| `AI Code Exposure: Remove Test-Data Flag from Current File` | Re-include the active file in sensitive counts |
+| `AI Code Exposure: Clear All Test-Data Flags` | Reset every test-data flag |
 
 ---
 
@@ -114,6 +125,11 @@ Larger view, opened from status bar click or from `AI Code Exposure: Show Dashbo
 | `aiExposure.excludeGlobs` | `node_modules`, `dist`, `build`, `.git`, … | Files excluded |
 | `aiExposure.persistAcrossSessions` | `true` | Remember exposed files across restarts |
 | `aiExposure.maxFileSizeKB` | `2048` | Skip files larger than this |
+| `aiExposure.sensitiveAlert.enabled` | `true` | Live warning when a file with secrets/PII is opened |
+| `aiExposure.sensitiveAlert.modal` | `true` | Show that alert as a blocking modal (vs corner toast) |
+| `aiExposure.highlightSensitive.enabled` | `true` | Highlight secrets/credentials/PII inline in open editors |
+| `aiExposure.proactiveProtection.enabled` | `false` | PSDE: block sensitive files from AI until confirmed |
+| `aiExposure.proactiveProtection.reviewAfterScan` | `true` | After a scan, open the bulk review picker (when PSDE on) |
 | `aiExposure.thresholdAd.enabled` | `true` | Show a one-time notice at high exposure |
 | `aiExposure.thresholdAd.percent` | `50` | Threshold for the notice |
 
@@ -135,4 +151,17 @@ When this project crosses 50% exposure, the extension shows a one-time notice re
 
 ## License
 
-MIT
+**Proprietary — End User License Agreement (EULA).**
+
+Starting with version **0.5.0**, this extension is licensed under the EULA
+included in the [LICENSE](LICENSE) file. Key points:
+
+- ✅ Free to install and use (personal or internal commercial)
+- ✅ Local-only, no telemetry, no data leaves your machine
+- ❌ No redistribution, no derivative works, no commercial resale
+- ❌ No reverse engineering / forking outside the marketplace channel
+- 📜 Versions ≤ 0.4.1 remain under MIT (historical)
+
+For commercial redistribution, enterprise licensing, MCP integration,
+or team-aggregation features — contact the publisher via Visual Studio
+Marketplace.

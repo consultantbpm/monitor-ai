@@ -15,11 +15,13 @@ export function createStatusBar(tracker: ExposureTracker): vscode.Disposable {
     } else {
       const pct = tracker.percent();
       item.text = `$(eye) AI exposure: ${pct.toFixed(1)}%`;
-      item.color = pct > 50 ? '#f44747' : pct > 25 ? '#e8731a' : undefined;
+      item.color = pct >= 50 ? '#f44747' : pct >= 25 ? '#e8731a' : '#000';
+      const sensitive = tracker.sensitiveExposedCount();
       item.tooltip = new vscode.MarkdownString(
         `**AI code exposure**\n\n` +
         `- Exposed lines: ${tracker.exposedLines().toLocaleString()} / ${total.toLocaleString()}\n` +
-        `- Exposed files: ${tracker.exposedFileCount()} / ${tracker.totalFileCount()}\n\n` +
+        `- Exposed files: ${tracker.exposedFileCount()} / ${tracker.totalFileCount()}\n` +
+        `- ⚠ Sensitive exposed: ${sensitive}\n\n` +
         `Click for dashboard.`
       );
     }

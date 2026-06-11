@@ -1,115 +1,151 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="380" height="800" viewBox="0 0 380 800" font-family="-apple-system, 'Segoe UI', system-ui, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="900" viewBox="0 0 380 900" font-family="-apple-system, 'Segoe UI', system-ui, sans-serif">
   <defs>
     <linearGradient id="fillGrad" x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0%" stop-color="#4ec9b0"/>
-      <stop offset="100%" stop-color="#c586c0"/>
+      <stop offset="0%" stop-color="#f44747"/>
+      <stop offset="100%" stop-color="#d92020"/>
     </linearGradient>
     <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0%" stop-color="#4ec9b0" stop-opacity="0.45"/>
-      <stop offset="100%" stop-color="#4ec9b0" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#f44747" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#f44747" stop-opacity="0"/>
     </linearGradient>
   </defs>
 
-  <!-- Sidebar bg -->
-  <rect width="380" height="800" fill="#252526"/>
+  <rect width="380" height="900" fill="#252526"/>
 
-  <!-- Title bar -->
   <rect x="0" y="0" width="380" height="30" fill="#2d2d30"/>
   <text x="14" y="20" fill="#cccccc" font-size="11" letter-spacing="1.5">AI CODE EXPOSURE</text>
 
-  <!-- Header section -->
   <rect x="0" y="30" width="380" height="26" fill="#2a2a2c"/>
   <text x="20" y="48" fill="#bbb" font-size="11" letter-spacing="1">CURRENT PROJECT</text>
 
-  <!-- Content -->
   <g transform="translate(16, 72)">
+    <!-- AI banner -->
+    <rect x="0" y="0" width="348" height="42" rx="3" fill="rgba(244,71,71,0.08)"/>
+    <rect x="0" y="0" width="3" height="42" fill="#f44747"/>
+    <text x="14" y="18" font-size="14">🤖</text>
+    <text x="36" y="20" fill="#eee" font-size="10.5">Copilot Chat, Claude Code, Continue, Gemini, pandō</text>
+    <text x="36" y="34" fill="#9aa4b2" font-size="9">Code potentially visible to 5 AI context windows</text>
 
     <!-- Project label -->
-    <text x="0" y="14" fill="#999" font-size="10" letter-spacing="1.2">MONITOR-AI</text>
+    <text x="0" y="68" fill="#999" font-size="10" letter-spacing="1.2">MONITOR-AI</text>
 
     <!-- Big % -->
-    <text x="0" y="68" fill="#e8e8e8" font-size="46" font-weight="700">37.4%</text>
+    <text x="0" y="122" fill="#f44747" font-size="46" font-weight="700">79.2%</text>
 
     <!-- Progress bar -->
-    <rect x="0" y="84" width="348" height="10" rx="5" fill="#3c3c3c"/>
-    <rect x="0" y="84" width="130" height="10" rx="5" fill="url(#fillGrad)"/>
-    <rect x="216" y="82" width="2" height="14" fill="#cccccc" opacity="0.6"/>
+    <rect x="0" y="138" width="348" height="10" rx="5" fill="#3c3c3c"/>
+    <rect x="0" y="138" width="275" height="10" rx="5" fill="url(#fillGrad)"/>
+    <rect x="297" y="136" width="2" height="14" fill="#cccccc" opacity="0.6"/>
 
-    <text x="0" y="112" fill="#aaa" font-size="11">Peak 62.0% · 4h ago</text>
+    <text x="0" y="166" fill="#aaa" font-size="11">Peak 85.7% · 13m ago</text>
 
     <!-- Stats grid -->
-    <g transform="translate(0, 134)" font-size="12">
+    <g transform="translate(0, 188)" font-size="12">
       <text x="0"   y="0"  fill="#bbb">Exposed lines</text>
-      <text x="348" y="0"  fill="#e8e8e8" font-weight="600" text-anchor="end">8,941</text>
+      <text x="348" y="0"  fill="#f44747" font-weight="700" text-anchor="end">8,941</text>
       <text x="0"   y="20" fill="#bbb">Total lines</text>
-      <text x="348" y="20" fill="#e8e8e8" font-weight="600" text-anchor="end">23,907</text>
+      <text x="348" y="20" fill="#f44747" font-weight="700" text-anchor="end">11,287</text>
       <text x="0"   y="40" fill="#bbb">Exposed files</text>
-      <text x="348" y="40" fill="#e8e8e8" font-weight="600" text-anchor="end">47</text>
+      <text x="348" y="40" fill="#f44747" font-weight="700" text-anchor="end">47</text>
       <text x="0"   y="60" fill="#bbb">Total files</text>
-      <text x="348" y="60" fill="#e8e8e8" font-weight="600" text-anchor="end">182</text>
+      <text x="348" y="60" fill="#f44747" font-weight="700" text-anchor="end">59</text>
       <text x="0"   y="80" fill="#bbb">Peak exposed lines</text>
-      <text x="348" y="80" fill="#4ec9b0" font-weight="600" text-anchor="end">14,832</text>
+      <text x="348" y="80" fill="#f44747" font-weight="700" text-anchor="end">9,672</text>
+    </g>
+
+    <!-- Category grid -->
+    <rect x="0" y="298" width="348" height="86" rx="3" fill="rgba(244,71,71,0.06)"/>
+    <rect x="0" y="298" width="3" height="86" fill="#f44747"/>
+    <g transform="translate(12, 318)" font-size="11">
+      <text x="0"   y="0"  fill="#ffb86b" letter-spacing="0.6">SECRETS EXPOSED</text>
+      <text x="324" y="0"  fill="#f44747" font-weight="700" text-anchor="end">3</text>
+      <text x="0"   y="22" fill="#ffb86b" letter-spacing="0.6">PASS / CREDENTIALS</text>
+      <text x="324" y="22" fill="#f44747" font-weight="700" text-anchor="end">2</text>
+      <text x="0"   y="44" fill="#ffb86b" letter-spacing="0.6">PII EXPOSED</text>
+      <text x="324" y="44" fill="#f44747" font-weight="700" text-anchor="end">1</text>
+    </g>
+
+    <!-- Sensitive files block -->
+    <rect x="0" y="402" width="348" height="118" rx="3" fill="rgba(255,184,107,0.05)" stroke="#ffb86b"/>
+    <text x="10" y="420" fill="#ffb86b" font-size="10" letter-spacing="0.6">⚠ SENSITIVE FILES EXPOSED</text>
+    <g transform="translate(10, 438)" font-size="11">
+      <g transform="translate(0, 0)">
+        <text x="0" y="0" fill="#cccccc">⚠ .env</text>
+        <text x="328" y="0" font-size="10" text-anchor="end">
+          <tspan fill="#ffb86b">pass</tspan>
+        </text>
+      </g>
+      <g transform="translate(0, 18)">
+        <text x="0" y="0" fill="#cccccc">⚠ config/credentials.json</text>
+        <text x="328" y="0" font-size="10" text-anchor="end">
+          <tspan fill="#f44747">secret</tspan>
+          <tspan fill="#ffb86b" dx="4">pass</tspan>
+        </text>
+      </g>
+      <g transform="translate(0, 36)">
+        <text x="0" y="0" fill="#cccccc">⚠ src/auth/keys.ts</text>
+        <text x="328" y="0" fill="#f44747" font-size="10" text-anchor="end">secret</text>
+      </g>
+      <g transform="translate(0, 54)">
+        <text x="0" y="0" fill="#cccccc">⚠ test/fixtures/users.json</text>
+        <text x="328" y="0" fill="#c586c0" font-size="10" text-anchor="end">pii</text>
+      </g>
     </g>
 
     <!-- Live section -->
-    <line x1="0" y1="240" x2="348" y2="240" stroke="#3c3c3c"/>
-    <g transform="translate(0, 260)">
+    <line x1="0" y1="540" x2="348" y2="540" stroke="#3c3c3c"/>
+    <g transform="translate(0, 560)">
       <text x="0" y="0" fill="#888" font-size="10">▾</text>
-      <circle cx="22" cy="-4" r="4" fill="#4ec9b0"/>
-      <circle cx="22" cy="-4" r="8" fill="none" stroke="#4ec9b0" stroke-opacity="0.4"/>
-      <text x="38" y="0" fill="#a0a0a0" font-size="10" letter-spacing="1.4">LIVE</text>
+      <circle cx="22" cy="-4" r="4" fill="#f44747"/>
+      <circle cx="22" cy="-4" r="8" fill="none" stroke="#f44747" stroke-opacity="0.4"/>
+      <text x="38" y="0" fill="#f44747" font-size="10" letter-spacing="1.4" font-weight="600">LIVE</text>
       <text x="348" y="0" fill="#888" font-size="10" text-anchor="end">2s ago</text>
     </g>
 
     <!-- Sparkline -->
-    <g transform="translate(0, 274)">
+    <g transform="translate(0, 574)">
       <rect x="0" y="0" width="348" height="44" rx="3" fill="#1e1e1e"/>
-      <path fill="url(#sparkFill)" d="M0,38 L18,36 L36,34 L54,32 L72,30 L90,30 L108,28 L126,26 L144,24 L162,22 L180,20 L198,18 L216,16 L234,15 L252,14 L270,13 L288,12 L306,11 L324,10 L348,10 L348,44 L0,44 Z"/>
-      <path fill="none" stroke="#4ec9b0" stroke-width="1.4" d="M0,38 L18,36 L36,34 L54,32 L72,30 L90,30 L108,28 L126,26 L144,24 L162,22 L180,20 L198,18 L216,16 L234,15 L252,14 L270,13 L288,12 L306,11 L324,10 L348,10"/>
+      <path fill="url(#sparkFill)" d="M0,38 L18,34 L36,30 L54,26 L72,24 L90,22 L108,20 L126,18 L144,16 L162,15 L180,14 L198,12 L216,11 L234,10 L252,9 L270,8 L288,8 L306,8 L324,8 L348,8 L348,44 L0,44 Z"/>
+      <path fill="none" stroke="#f44747" stroke-width="1.4" d="M0,38 L18,34 L36,30 L54,26 L72,24 L90,22 L108,20 L126,18 L144,16 L162,15 L180,14 L198,12 L216,11 L234,10 L252,9 L270,8 L288,8 L306,8 L324,8 L348,8"/>
     </g>
 
     <!-- Activity feed -->
-    <g transform="translate(0, 332)" font-size="11">
+    <g transform="translate(0, 632)" font-size="11">
       <g transform="translate(0, 0)">
-        <text x="0" y="0" fill="#4ec9b0">●</text>
-        <text x="14" y="0" fill="#cccccc">src/exposureTracker.ts</text>
-        <text x="348" y="0" fill="#777" text-anchor="end">264 L · 2s</text>
+        <text x="0" y="0" fill="#ffb86b">●</text>
+        <text x="14" y="0" fill="#cccccc">⚠ .env</text>
+        <text x="348" y="0" fill="#777" text-anchor="end">.env file · 2s</text>
       </g>
       <g transform="translate(0, 18)">
-        <text x="0" y="0" fill="#569cd6">✎</text>
-        <text x="14" y="0" fill="#cccccc">src/dashboard.ts</text>
-        <text x="348" y="0" fill="#777" text-anchor="end">+12 L · 15s</text>
+        <text x="0" y="0" fill="#f44747">●</text>
+        <text x="14" y="0" fill="#cccccc">src/exposureTracker.ts</text>
+        <text x="348" y="0" fill="#777" text-anchor="end">264 L · 15s</text>
       </g>
       <g transform="translate(0, 36)">
-        <text x="0" y="0" fill="#4ec9b0">●</text>
-        <text x="14" y="0" fill="#cccccc">src/currentProjectView.ts</text>
-        <text x="348" y="0" fill="#777" text-anchor="end">218 L · 31s</text>
+        <text x="0" y="0" fill="#569cd6">✎</text>
+        <text x="14" y="0" fill="#cccccc">src/dashboard.ts</text>
+        <text x="348" y="0" fill="#777" text-anchor="end">+12 L · 31s</text>
       </g>
       <g transform="translate(0, 54)">
-        <text x="0" y="0" fill="#c586c0">+</text>
-        <text x="14" y="0" fill="#cccccc">media/screenshot-sidebar.svg</text>
-        <text x="348" y="0" fill="#777" text-anchor="end">144 L · 1m</text>
+        <text x="0" y="0" fill="#ffb86b">●</text>
+        <text x="14" y="0" fill="#cccccc">⚠ config/credentials.json</text>
+        <text x="348" y="0" fill="#777" text-anchor="end">1m</text>
       </g>
       <g transform="translate(0, 72)">
-        <text x="0" y="0" fill="#569cd6">✎</text>
-        <text x="14" y="0" fill="#cccccc">README.md</text>
-        <text x="348" y="0" fill="#777" text-anchor="end">+8 L · 2m</text>
+        <text x="0" y="0" fill="#f44747">●</text>
+        <text x="14" y="0" fill="#cccccc">package.json</text>
+        <text x="348" y="0" fill="#777" text-anchor="end">98 L · 2m</text>
       </g>
       <g transform="translate(0, 90)">
-        <text x="0" y="0" fill="#4ec9b0">●</text>
-        <text x="14" y="0" fill="#cccccc">package.json</text>
-        <text x="348" y="0" fill="#777" text-anchor="end">98 L · 3m</text>
-      </g>
-      <g transform="translate(0, 108)">
         <text x="0" y="0" fill="#d7ba7d">↻</text>
         <text x="14" y="0" fill="#cccccc">workspace rescanned</text>
-        <text x="348" y="0" fill="#777" text-anchor="end">23,907 L · 5m</text>
+        <text x="348" y="0" fill="#777" text-anchor="end">11,287 L · 3m</text>
       </g>
     </g>
 
     <!-- Buttons -->
-    <line x1="0" y1="468" x2="348" y2="468" stroke="#3c3c3c"/>
-    <g transform="translate(0, 484)">
+    <line x1="0" y1="760" x2="348" y2="760" stroke="#3c3c3c"/>
+    <g transform="translate(0, 776)">
       <rect x="0" y="0" width="86" height="26" rx="2" fill="#0e639c"/>
       <text x="43" y="18" fill="#fff" font-size="11" text-anchor="middle">Dashboard</text>
       <rect x="92" y="0" width="68" height="26" rx="2" fill="#3a3d41"/>
@@ -120,6 +156,6 @@
   </g>
 
   <!-- Status bar -->
-  <rect x="0" y="778" width="380" height="22" fill="#007acc"/>
-  <text x="12" y="794" fill="#fff" font-size="11">👁 AI exposure: 37.4%</text>
+  <rect x="0" y="878" width="380" height="22" fill="#005a9e"/>
+  <text x="12" y="894" fill="#fff" font-size="11" font-weight="600">👁 AI exposure: 79.2%</text>
 </svg>

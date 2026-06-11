@@ -27,15 +27,34 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
       if (m?.type === 'dashboard') void vscode.commands.executeCommand('aiExposure.showDashboard');
       if (m?.type === 'rescan')    void vscode.commands.executeCommand('aiExposure.rescan');
       if (m?.type === 'reset')     void vscode.commands.executeCommand('aiExposure.resetCurrent');
+      if (m?.type === 'togglePsde') void vscode.commands.executeCommand('aiExposure.toggleProactiveProtection');
+      if (m?.type === 'open' && typeof m.path === 'string') {
+        void vscode.window.showTextDocument(vscode.Uri.file(m.path));
+      }
+      if (m?.type === 'reviewCategory' && (m.category === 'secret' || m.category === 'credential' || m.category === 'pii')) {
+        void vscode.commands.executeCommand('aiExposure.reviewSensitiveByCategory', m.category);
+      }
     });
+
+    // Refresh state when PSDE setting changes
+    this.subs.push(vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('aiExposure.proactiveProtection')) this.postState();
+    }));
   }
 
   private postState(): void {
     if (!this.view) return;
     const m = this.tracker.currentMetrics();
+    const sensitive = this.tracker.sensitiveExposedListWithCategories(20).map((s) => ({
+      path: s.path,
+      rel: m && s.path.startsWith(m.workspacePath) ? s.path.slice(m.workspacePath.length + 1) : s.path,
+      cats: s.cats,
+    }));
+    const psdeOn = !!vscode.workspace.getConfiguration('aiExposure').get<boolean>('proactiveProtection.enabled', false);
+    const protectedCount = this.tracker.sensitiveFilesAll().length;
     this.view.webview.postMessage({
       type: 'state',
-      payload: { hasWorkspace: !!m, metrics: m, now: Date.now() },
+      payload: { hasWorkspace: !!m, metrics: m, sensitive, psdeOn, protectedCount, now: Date.now() },
     });
   }
 
@@ -59,7 +78,8 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 8px; font-size: 0.9em; }
   .label { opacity: 0.7; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
   .big { font-size: 2.4em; font-weight: 600; line-height: 1.1; margin: 4px 0; font-variant-numeric: tabular-nums; color: var(--vscode-foreground); }
-  .num.detail { color: #f44747; }
+  .num.detail  { color: #f44747; }
+  .num.neutral { color: #000; }
   .ai-banner { display: flex; gap: 6px; align-items: center; padding: 6px 8px; margin: 4px 0 6px; background: rgba(244,71,71,0.08); border-left: 3px solid #f44747; border-radius: 2px; font-size: 0.78em; }
   .ai-banner.safe { background: rgba(78,201,176,0.06); border-left-color: #4ec9b0; }
   .ai-banner .ai-icon { font-size: 1.1em; }
@@ -68,6 +88,21 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   .risk-line .lbl { color: #f44747; font-weight: 600; font-size: 0.78em; letter-spacing: 0.5px; text-transform: uppercase; }
   .feed-row.sensitive .badge { color: #ffb86b !important; }
   .feed-row.sensitive .path::before { content: '⚠ '; color: #ffb86b; }
+  .cat-grid { display: grid; grid-template-columns: 1fr max-content; gap: 3px 8px; margin: 10px 0 6px; padding: 8px 10px; background: rgba(244,71,71,0.06); border-left: 3px solid #f44747; border-radius: 3px; }
+  .cat-grid .cat-lbl { font-size: 0.78em; letter-spacing: 0.6px; text-transform: uppercase; color: #ffb86b; cursor: pointer; }
+  .cat-grid .cat-num { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; color: #f44747; cursor: pointer; padding: 1px 5px; border-radius: 3px; }
+  .cat-grid .cat-num:hover, .cat-grid .cat-lbl:hover { background: rgba(244,71,71,0.18); }
+  .cat-grid .cat-row { display: contents; }
+  .sen-block { margin-top: 10px; padding: 6px 10px; border: 1px solid #ffb86b; border-radius: 3px; background: rgba(255,184,107,0.05); }
+  .sen-block h4 { margin: 0 0 5px; font-size: 0.78em; color: #ffb86b; letter-spacing: 0.6px; text-transform: uppercase; }
+  .sen-list { font-size: 0.78em; max-height: 120px; overflow-y: auto; }
+  .sen-list .sen-row { padding: 2px 0; display: grid; grid-template-columns: 1fr max-content; gap: 6px; }
+  .sen-list .sen-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .sen-list .sen-name:hover { text-decoration: underline; }
+  .sen-list .sen-cats { font-size: 0.9em; opacity: 0.85; }
+  .cat-secret { color: #f44747; }
+  .cat-credential { color: #ffb86b; }
+  .cat-pii { color: #c586c0; }
   .bar { height: 10px; background: var(--vscode-input-background); border-radius: 5px; overflow: hidden; margin: 4px 0 8px; position: relative; }
   .fill { height: 100%; background: linear-gradient(90deg, #4ec9b0, #c586c0); transition: width .3s ease, background .3s ease; }
   .fill.warn   { background: linear-gradient(90deg, #d97706, #e8731a); }
@@ -150,13 +185,34 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   <button id="dashboard">Dashboard</button>
   <button id="rescan" class="secondary">Rescan</button>
   <button id="reset" class="secondary">Reset</button>
+  <button id="psde" class="secondary" title="Proactive Sensitive Data Exposure">🛡 PSDE</button>
 </div>
+
+<style>
+  #psde.psdeOn  { background: #4ec9b0; color: #000; font-weight: 700; }
+  #psde.psdeOff { background: var(--vscode-button-secondaryBackground); }
+</style>
 
 <script>
   const vscode = acquireVsCodeApi();
   document.getElementById('dashboard').onclick = () => vscode.postMessage({ type: 'dashboard' });
   document.getElementById('rescan').onclick    = () => vscode.postMessage({ type: 'rescan' });
   document.getElementById('reset').onclick     = () => vscode.postMessage({ type: 'reset' });
+  document.getElementById('psde').onclick      = () => vscode.postMessage({ type: 'togglePsde' });
+
+  function setPsdeButton(on, protectedCount) {
+    const b = document.getElementById('psde');
+    if (!b) return;
+    b.className = 'secondary ' + (on ? 'psdeOn' : 'psdeOff');
+    b.textContent = '🛡 PSDE: ' + (on ? 'ON (' + (protectedCount || 0) + ')' : 'OFF');
+  }
+
+  // Delegated click for category review (Secrets / Pass / PII)
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (!t || !t.dataset || !t.dataset.cat) return;
+    vscode.postMessage({ type: 'reviewCategory', category: t.dataset.cat });
+  });
 
   const persisted = vscode.getState() || {};
   let collapsed = !!persisted.collapsed;
@@ -173,9 +229,9 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
 
   function fmt(n) { return (n || 0).toLocaleString(); }
   function pctColor(p) {
-    if (p > 50) return '#f44747';
-    if (p > 25) return '#e8731a';
-    return '';
+    if (p >= 50) return '#f44747';
+    if (p >= 25) return '#e8731a';
+    return '#000';
   }
   function ageLabel(ms) {
     if (!ms) return '—';
@@ -234,9 +290,12 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
     const prev = parseInt(el.dataset.value || '0', 10);
     if (prev === next) { el.textContent = fmt(next); return; }
     el.dataset.value = String(next);
-    el.classList.remove('bump-up','bump-down');
-    void el.offsetWidth;
-    el.classList.add(next > prev ? 'bump-up' : 'bump-down');
+    // Skip bump highlight for neutral cells (totals)
+    if (!el.classList.contains('neutral')) {
+      el.classList.remove('bump-up','bump-down');
+      void el.offsetWidth;
+      el.classList.add(next > prev ? 'bump-up' : 'bump-down');
+    }
     const start = performance.now();
     const dur = 450;
     function step(t) {
@@ -272,12 +331,20 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
       '</div>' +
       '<div class="peakBadge">Peak ' + peakPct.toFixed(1) + '% &middot; ' + ageLabel(x.peak.percentAt) + '</div>' +
       '<div class="grid" style="margin-top:10px">' +
-        '<span>Exposed lines</span><span class="num detail" id="el" data-value="0">0</span>' +
-        '<span>Total lines</span><span class="num detail" id="tl" data-value="0">0</span>' +
-        '<span>Exposed files</span><span class="num detail" id="ef" data-value="0">0</span>' +
-        '<span>Total files</span><span class="num detail" id="tf" data-value="0">0</span>' +
-        '<span>⚠ Sensitive exposed</span><span class="num detail" id="se" data-value="0">0</span>' +
+        '<span>Exposed lines</span><span class="num detail"  id="el" data-value="0">0</span>' +
+        '<span>Total lines</span><span class="num neutral"   id="tl" data-value="0">0</span>' +
+        '<span>Exposed files</span><span class="num detail"  id="ef" data-value="0">0</span>' +
+        '<span>Total files</span><span class="num neutral"   id="tf" data-value="0">0</span>' +
         '<span>Peak exposed lines</span><span class="num detail" id="pl" data-value="0">0</span>' +
+      '</div>' +
+      '<div class="cat-grid">' +
+        '<span class="cat-lbl" data-cat="secret"     title="Click to review">Secrets exposed</span><span class="cat-num" data-cat="secret"     id="catSec"  data-value="0" title="Click to review">0</span>' +
+        '<span class="cat-lbl" data-cat="credential" title="Click to review">Pass / credentials</span><span class="cat-num" data-cat="credential" id="catCred" data-value="0" title="Click to review">0</span>' +
+        '<span class="cat-lbl" data-cat="pii"        title="Click to review">PII exposed</span><span class="cat-num" data-cat="pii"        id="catPii"  data-value="0" title="Click to review">0</span>' +
+      '</div>' +
+      '<div class="sen-block" id="senBlock" style="display:none">' +
+        '<h4>⚠ Sensitive files exposed</h4>' +
+        '<div class="sen-list" id="senList"></div>' +
       '</div>';
   }
 
@@ -295,9 +362,28 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
     setNum('tl', x.totalLines);
     setNum('ef', x.exposedFiles);
     setNum('tf', x.totalFiles);
-    setNum('se', x.sensitiveExposedFiles || 0);
     setNum('pl', x.peak.exposedLines);
+    const cat = x.sensitiveByCategory || { secret: 0, credential: 0, pii: 0 };
+    setNum('catSec',  cat.secret);
+    setNum('catCred', cat.credential);
+    setNum('catPii',  cat.pii);
     lastPct = pct;
+  }
+
+  function renderSensitiveList(items) {
+    const block = document.getElementById('senBlock');
+    const list  = document.getElementById('senList');
+    if (!block || !list) return;
+    if (!items || items.length === 0) { block.style.display = 'none'; list.innerHTML = ''; return; }
+    block.style.display = '';
+    list.innerHTML = items.slice(0, 12).map((s) => {
+      const cats = s.cats || [];
+      const catHtml = cats.map(c => '<span class="cat-' + c + '">' + (c === 'credential' ? 'pass' : c) + '</span>').join(' ');
+      return '<div class="sen-row" title="' + escapeHtml(s.path || '') + '"><span class="sen-name" data-path="' + escapeHtml(s.path || '') + '">⚠ ' + escapeHtml(s.rel || s.path || '') + '</span><span class="sen-cats">' + catHtml + '</span></div>';
+    }).join('');
+    list.querySelectorAll('.sen-name[data-path]').forEach((el) => {
+      el.addEventListener('click', () => vscode.postMessage({ type: 'open', path: el.dataset.path }));
+    });
   }
 
   function pushFeedRow(ev, fresh) {
@@ -326,11 +412,13 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
     if (!m) return;
     if (m.type === 'state') {
       const body = document.getElementById('body');
+      setPsdeButton(!!m.payload.psdeOn, m.payload.protectedCount);
       if (!m.payload.hasWorkspace || !m.payload.metrics) {
         body.innerHTML = '<div class="empty">No folder open. Open a folder to start monitoring.</div>';
         return;
       }
       applyMetrics(m.payload.metrics);
+      renderSensitiveList(m.payload.sensitive || []);
     } else if (m.type === 'history') {
       const evs = m.payload.activity || [];
       document.getElementById('feed').innerHTML = '';

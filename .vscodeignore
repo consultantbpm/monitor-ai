@@ -11,5 +11,6 @@ PROMOTION.md
 .teachcm/**
 .tcm-mockups/**
 scripts/**
+test-fixtures/**
 media/*.svg
 *.vsix
