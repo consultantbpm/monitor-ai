@@ -45,7 +45,7 @@ export function showDashboard(_context: vscode.ExtensionContext, tracker: Exposu
 function snapshot(tracker: ExposureTracker) {
   const current = tracker.currentMetrics();
   const all = tracker.allProjects();
-  const projects = Object.values(all).sort((a, b) => b.lastSeen - a.lastSeen);
+  const projects = Object.values(all).sort((a, b) => (b.percent || 0) - (a.percent || 0));
   const breakdown = tracker.breakdown().slice(0, 1000).map((f) => {
     const root = current?.workspacePath ?? '';
     return {
@@ -98,14 +98,16 @@ function renderHtml(): string {
   .live-head.collapsed .chev { transform: rotate(-90deg); }
   .live-head .title { font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.78; }
   .live-head .age   { margin-left: auto; font-size: 0.78em; opacity: 0.6; font-variant-numeric: tabular-nums; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; background: #4ec9b0; box-shadow: 0 0 0 0 rgba(78,201,176,0.7); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #f44747; box-shadow: 0 0 0 0 rgba(244,71,71,0.7); }
   .dot.beat { animation: beat 0.6s ease-out; }
   @keyframes beat {
-    0%   { transform: scale(1);   box-shadow: 0 0 0 0 rgba(78,201,176,0.7); }
-    50%  { transform: scale(1.4); box-shadow: 0 0 0 7px rgba(78,201,176,0); }
-    100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(78,201,176,0); }
+    0%   { transform: scale(1);   box-shadow: 0 0 0 0 rgba(244,71,71,0.7); }
+    50%  { transform: scale(1.4); box-shadow: 0 0 0 7px rgba(244,71,71,0); }
+    100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(244,71,71,0); }
   }
   .dot.stale { background: var(--vscode-disabledForeground); opacity: 0.55; }
+  .live { border-color: #f44747 !important; }
+  .live-head .title { color: #f44747; }
   .live-body { display: grid; grid-template-columns: 1fr 280px; gap: 14px; margin-top: 10px; }
   .live-body.hidden { display: none; }
   .spark { width: 100%; height: 90px; display: block; background: var(--vscode-input-background); border-radius: 4px; }
@@ -114,21 +116,24 @@ function renderHtml(): string {
   .feed-row { display: grid; grid-template-columns: 16px 1fr max-content; gap: 8px; padding: 3px 4px; align-items: baseline; border-radius: 3px; }
   .feed-row.fresh { animation: flash 1.4s ease-out; }
   @keyframes flash {
-    0%   { background: rgba(78,201,176,0.22); }
+    0%   { background: rgba(244,71,71,0.22); }
     100% { background: transparent; }
   }
   .feed-row .badge { text-align: center; opacity: 0.9; }
   .feed-row .path  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.92; cursor: pointer; }
   .feed-row .path:hover { text-decoration: underline; }
   .feed-row .meta  { opacity: 0.55; font-variant-numeric: tabular-nums; font-size: 0.9em; }
-  .b-exposed { color: #4ec9b0; }
+  .b-exposed { color: #f44747; }
   .b-changed { color: #569cd6; }
   .b-created { color: #c586c0; }
   .b-deleted { color: #f44747; }
   .b-reset   { color: #d7ba7d; }
   .b-rescan  { color: #d7ba7d; }
-  .bump-up   { color: #4ec9b0; transition: color 1.2s ease; }
+  .bump-up   { color: #f44747; transition: color 1.2s ease; }
   .bump-down { color: #f44747; transition: color 1.2s ease; }
+  /* All detail values red */
+  .grid div:nth-child(even) { color: #f44747; font-weight: 600; }
+  .big { color: var(--vscode-foreground); }
 </style></head>
 <body>
   <h1>AI Code Exposure Dashboard</h1>
@@ -166,12 +171,12 @@ function renderHtml(): string {
         <svg class="spark" id="spark" viewBox="0 0 600 90" preserveAspectRatio="none">
           <defs>
             <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%"   stop-color="#4ec9b0" stop-opacity="0.45"/>
-              <stop offset="100%" stop-color="#4ec9b0" stop-opacity="0"/>
+              <stop offset="0%"   stop-color="#f44747" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="#f44747" stop-opacity="0"/>
             </linearGradient>
           </defs>
           <path id="sparkArea" fill="url(#sparkFill)" d=""></path>
-          <path id="sparkLine" fill="none" stroke="#4ec9b0" stroke-width="1.4" d=""></path>
+          <path id="sparkLine" fill="none" stroke="#f44747" stroke-width="1.4" d=""></path>
         </svg>
         <div class="spark-meta">
           <span>% AI exposure · last 60s (1 sample/s)</span>
@@ -320,6 +325,11 @@ function renderHtml(): string {
   }
 
   function fmt(n) { return (n || 0).toLocaleString(); }
+  function pctColor(p) {
+    if (p > 50) return '#f44747';
+    if (p > 25) return '#e8731a';
+    return '';
+  }
   function ageLabel(ms) {
     if (!ms) return '—';
     const s = Math.max(0, Math.floor((Date.now() - ms) / 1000));
@@ -369,9 +379,13 @@ function renderHtml(): string {
       document.getElementById('peakBadge').textContent = '';
       return;
     }
-    document.getElementById('pct').textContent = c.percent.toFixed(1) + '%';
+    const pctEl = document.getElementById('pct');
+    pctEl.textContent = c.percent.toFixed(1) + '%';
+    pctEl.style.color = pctColor(c.percent);
     document.getElementById('fill').style.width = c.percent.toFixed(2) + '%';
     document.getElementById('projName').textContent = c.displayName + '  —  ' + c.workspacePath;
+    const peakPctEl = document.getElementById('peakPct');
+    peakPctEl.style.color = pctColor(c.peak.percent || 0);
     animateNum(document.getElementById('el'), c.exposedLines);
     animateNum(document.getElementById('tl'), c.totalLines);
     animateNum(document.getElementById('ef'), c.exposedFiles);
@@ -413,8 +427,10 @@ function renderHtml(): string {
       const minBarPct = (p.percent || 0).toFixed(2);
       const peakPct   = (p.peak ? p.peak.percent : 0) || 0;
       const peakLeft  = Math.min(99, peakPct).toFixed(2);
+      const rowColor = pctColor(p.percent || 0);
+      const peakColor = pctColor(peakPct);
       tr.innerHTML =
-        '<td class="dot">' + (isCurrent ? '●' : '○') + '</td>' +
+        '<td class="dot" style="' + (rowColor ? 'color:' + rowColor : '') + '">' + (isCurrent ? '●' : '○') + '</td>' +
         '<td title="' + escapeAttr(p.workspacePath) + '">' + escapeHtml(p.displayName) + '</td>' +
         '<td>' +
           '<span class="miniBar">' +
@@ -422,8 +438,8 @@ function renderHtml(): string {
             (peakPct > (p.percent||0) ? '<span class="miniPeak" style="left:' + peakLeft + '%" title="Peak ' + peakPct.toFixed(1) + '%"></span>' : '') +
           '</span>' +
         '</td>' +
-        '<td class="num">' + (p.percent || 0).toFixed(1) + '%</td>' +
-        '<td class="num">' + peakPct.toFixed(1) + '%</td>' +
+        '<td class="num" style="' + (rowColor ? 'color:' + rowColor : '') + '">' + (p.percent || 0).toFixed(1) + '%</td>' +
+        '<td class="num" style="' + (peakColor ? 'color:' + peakColor : '') + '">' + peakPct.toFixed(1) + '%</td>' +
         '<td class="num">' + fmt(p.exposedLines) + '</td>' +
         '<td class="num">' + fmt(p.totalLines) + '</td>' +
         '<td class="num">' + fmt(p.totalFiles) + '</td>' +

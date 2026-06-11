@@ -2,7 +2,7 @@
   "name": "ai-code-exposure-monitor",
   "displayName": "AI Code Exposure Monitor",
   "description": "Real-time percentage of your workspace source code that has been opened in the editor (and thus potentially exposed to AI assistants). Tracks peaks across all projects.",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "publisher": "ConsultantBPMhumansoftware",
   "license": "MIT",
   "icon": "media/eye.png",

@@ -58,13 +58,14 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
 <style>
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 8px; font-size: 0.9em; }
   .label { opacity: 0.7; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
-  .big { font-size: 2.4em; font-weight: 600; line-height: 1.1; margin: 4px 0; font-variant-numeric: tabular-nums; }
+  .big { font-size: 2.4em; font-weight: 600; line-height: 1.1; margin: 4px 0; font-variant-numeric: tabular-nums; color: var(--vscode-foreground); }
+  .num.detail { color: #f44747; }
   .bar { height: 10px; background: var(--vscode-input-background); border-radius: 5px; overflow: hidden; margin: 4px 0 8px; position: relative; }
   .fill { height: 100%; background: linear-gradient(90deg, #4ec9b0, #c586c0); transition: width .3s ease; }
   .peakMark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--vscode-foreground); opacity: 0.55; }
   .grid { display: grid; grid-template-columns: 1fr max-content; gap: 3px 8px; margin: 6px 0; }
   .num { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
-  .num.bump-up   { color: #4ec9b0; transition: color 1.2s ease; }
+  .num.bump-up   { color: #f44747; transition: color 1.2s ease; }
   .num.bump-down { color: #f44747; transition: color 1.2s ease; }
   .section { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--vscode-panel-border); }
   button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 0; padding: 4px 10px; cursor: pointer; border-radius: 2px; font-size: 0.85em; margin-right: 4px; font-family: inherit; }
@@ -79,13 +80,14 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   .live-head.collapsed .chev { transform: rotate(-90deg); }
   .live-head .title { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.75; }
   .live-head .age { margin-left: auto; font-size: 0.75em; opacity: 0.6; font-variant-numeric: tabular-nums; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ec9b0; box-shadow: 0 0 0 0 rgba(78,201,176,0.7); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #f44747; box-shadow: 0 0 0 0 rgba(244,71,71,0.7); }
   .dot.beat { animation: beat 0.6s ease-out; }
   @keyframes beat {
-    0%   { transform: scale(1);   box-shadow: 0 0 0 0 rgba(78,201,176,0.7); }
-    50%  { transform: scale(1.4); box-shadow: 0 0 0 6px rgba(78,201,176,0); }
-    100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(78,201,176,0); }
+    0%   { transform: scale(1);   box-shadow: 0 0 0 0 rgba(244,71,71,0.7); }
+    50%  { transform: scale(1.4); box-shadow: 0 0 0 6px rgba(244,71,71,0); }
+    100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(244,71,71,0); }
   }
+  .live .title { color: #f44747; }
   .dot.stale { background: var(--vscode-disabledForeground); opacity: 0.5; }
   .live-body { margin-top: 6px; display: block; }
   .live-body.hidden { display: none; }
@@ -94,13 +96,13 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   .feed-row { display: grid; grid-template-columns: 14px 1fr max-content; gap: 6px; padding: 2px 0; align-items: baseline; border-bottom: 1px dashed transparent; }
   .feed-row.fresh { animation: flash 1.2s ease-out; }
   @keyframes flash {
-    0%   { background: rgba(78,201,176,0.18); }
+    0%   { background: rgba(244,71,71,0.18); }
     100% { background: transparent; }
   }
   .feed-row .badge { font-size: 0.85em; text-align: center; opacity: 0.85; }
   .feed-row .path { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9; }
   .feed-row .meta { opacity: 0.55; font-variant-numeric: tabular-nums; font-size: 0.85em; }
-  .b-exposed { color: #4ec9b0; }
+  .b-exposed { color: #f44747; }
   .b-changed { color: #569cd6; }
   .b-created { color: #c586c0; }
   .b-deleted { color: #f44747; }
@@ -123,12 +125,12 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
     <svg class="spark" id="spark" viewBox="0 0 200 36" preserveAspectRatio="none">
       <defs>
         <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%"   stop-color="#4ec9b0" stop-opacity="0.45"/>
-          <stop offset="100%" stop-color="#4ec9b0" stop-opacity="0"/>
+          <stop offset="0%"   stop-color="#f44747" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#f44747" stop-opacity="0"/>
         </linearGradient>
       </defs>
       <path id="sparkArea" fill="url(#sparkFill)" d=""></path>
-      <path id="sparkLine" fill="none" stroke="#4ec9b0" stroke-width="1.2" d=""></path>
+      <path id="sparkLine" fill="none" stroke="#f44747" stroke-width="1.2" d=""></path>
     </svg>
     <div class="feed" id="feed"></div>
   </div>
@@ -160,6 +162,11 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   }
 
   function fmt(n) { return (n || 0).toLocaleString(); }
+  function pctColor(p) {
+    if (p > 50) return '#f44747';
+    if (p > 25) return '#e8731a';
+    return '';
+  }
   function ageLabel(ms) {
     if (!ms) return '—';
     const s = Math.max(0, Math.floor((Date.now() - ms) / 1000));
@@ -247,11 +254,11 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
       '</div>' +
       '<div class="peakBadge">Peak ' + peakPct.toFixed(1) + '% &middot; ' + ageLabel(x.peak.percentAt) + '</div>' +
       '<div class="grid" style="margin-top:10px">' +
-        '<span>Exposed lines</span><span class="num" id="el" data-value="0">0</span>' +
-        '<span>Total lines</span><span class="num"  id="tl" data-value="0">0</span>' +
-        '<span>Exposed files</span><span class="num" id="ef" data-value="0">0</span>' +
-        '<span>Total files</span><span class="num"  id="tf" data-value="0">0</span>' +
-        '<span>Peak exposed lines</span><span class="num" id="pl" data-value="0">0</span>' +
+        '<span>Exposed lines</span><span class="num detail" id="el" data-value="0">0</span>' +
+        '<span>Total lines</span><span class="num detail" id="tl" data-value="0">0</span>' +
+        '<span>Exposed files</span><span class="num detail" id="ef" data-value="0">0</span>' +
+        '<span>Total files</span><span class="num detail" id="tf" data-value="0">0</span>' +
+        '<span>Peak exposed lines</span><span class="num detail" id="pl" data-value="0">0</span>' +
       '</div>';
   }
 
@@ -259,7 +266,9 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
     if (!document.getElementById('pct')) renderBody(x);
     const pct = x.percent || 0;
     const peakPct = x.peak.percent || 0;
-    document.getElementById('pct').textContent = pct.toFixed(1) + '%';
+    const pctEl = document.getElementById('pct');
+    pctEl.textContent = pct.toFixed(1) + '%';
+    pctEl.style.color = pctColor(pct);
     document.getElementById('fill').style.width = pct.toFixed(2) + '%';
     setNum('el', x.exposedLines);
     setNum('tl', x.totalLines);

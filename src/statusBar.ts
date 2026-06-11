@@ -10,10 +10,12 @@ export function createStatusBar(tracker: ExposureTracker): vscode.Disposable {
     const total = tracker.totalLines();
     if (total === 0) {
       item.text = '$(eye) AI exposure: scanning…';
+      item.color = undefined;
       item.tooltip = new vscode.MarkdownString('Indexing workspace files — click for dashboard.');
     } else {
       const pct = tracker.percent();
       item.text = `$(eye) AI exposure: ${pct.toFixed(1)}%`;
+      item.color = pct > 50 ? '#f44747' : pct > 25 ? '#e8731a' : undefined;
       item.tooltip = new vscode.MarkdownString(
         `**AI code exposure**\n\n` +
         `- Exposed lines: ${tracker.exposedLines().toLocaleString()} / ${total.toLocaleString()}\n` +
