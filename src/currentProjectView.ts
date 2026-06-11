@@ -69,7 +69,9 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   .feed-row.sensitive .badge { color: #ffb86b !important; }
   .feed-row.sensitive .path::before { content: '⚠ '; color: #ffb86b; }
   .bar { height: 10px; background: var(--vscode-input-background); border-radius: 5px; overflow: hidden; margin: 4px 0 8px; position: relative; }
-  .fill { height: 100%; background: linear-gradient(90deg, #4ec9b0, #c586c0); transition: width .3s ease; }
+  .fill { height: 100%; background: linear-gradient(90deg, #4ec9b0, #c586c0); transition: width .3s ease, background .3s ease; }
+  .fill.warn   { background: linear-gradient(90deg, #d97706, #e8731a); }
+  .fill.danger { background: linear-gradient(90deg, #f44747, #d92020); }
   .peakMark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--vscode-foreground); opacity: 0.55; }
   .grid { display: grid; grid-template-columns: 1fr max-content; gap: 3px 8px; margin: 6px 0; }
   .num { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
@@ -286,7 +288,9 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
     const pctEl = document.getElementById('pct');
     pctEl.textContent = pct.toFixed(1) + '%';
     pctEl.style.color = pctColor(pct);
-    document.getElementById('fill').style.width = pct.toFixed(2) + '%';
+    const fillEl = document.getElementById('fill');
+    fillEl.style.width = pct.toFixed(2) + '%';
+    fillEl.className = 'fill' + (pct > 50 ? ' danger' : pct > 25 ? ' warn' : '');
     setNum('el', x.exposedLines);
     setNum('tl', x.totalLines);
     setNum('ef', x.exposedFiles);

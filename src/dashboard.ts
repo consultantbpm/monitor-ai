@@ -75,7 +75,9 @@ function renderHtml(): string {
   h2 { font-size: 1em; margin: 24px 0 8px; opacity: 0.85; }
   .big { font-size: 3em; font-weight: 600; line-height: 1.1; }
   .bar { height: 18px; background: var(--vscode-input-background); border-radius: 9px; overflow: hidden; margin: 8px 0 6px; position: relative; }
-  .fill { height: 100%; background: linear-gradient(90deg, #4ec9b0, #c586c0); transition: width .3s ease; }
+  .fill { height: 100%; background: linear-gradient(90deg, #4ec9b0, #c586c0); transition: width .3s ease, background .3s ease; }
+  .fill.warn   { background: linear-gradient(90deg, #d97706, #e8731a); }
+  .fill.danger { background: linear-gradient(90deg, #f44747, #d92020); }
   .peakMark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--vscode-foreground); opacity: 0.6; }
   .peakBadge { font-size: 0.85em; opacity: 0.75; margin-bottom: 14px; }
   .grid { display: grid; grid-template-columns: max-content max-content; gap: 4px 24px; margin-bottom: 16px; }
@@ -97,7 +99,9 @@ function renderHtml(): string {
   input[type=text] { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); padding: 4px 8px; width: 240px; }
   label { margin-right: 12px; }
   .miniBar { display: inline-block; vertical-align: middle; width: 80px; height: 8px; background: var(--vscode-input-background); border-radius: 4px; overflow: hidden; position: relative; margin-right: 6px; }
-  .miniFill { height: 100%; background: linear-gradient(90deg,#4ec9b0,#c586c0); }
+  .miniFill { height: 100%; background: linear-gradient(90deg,#4ec9b0,#c586c0); transition: background .3s ease; }
+  .miniFill.warn   { background: linear-gradient(90deg, #d97706, #e8731a); }
+  .miniFill.danger { background: linear-gradient(90deg, #f44747, #d92020); }
   .miniPeak { position: absolute; top: -1px; bottom: -1px; width: 2px; background: var(--vscode-foreground); opacity: 0.6; }
 
   .live { margin: 18px 0 6px; padding: 10px 14px; border: 1px solid var(--vscode-panel-border); border-radius: 6px; background: var(--vscode-editor-background); }
@@ -469,7 +473,9 @@ function renderHtml(): string {
     const pctEl = document.getElementById('pct');
     pctEl.textContent = c.percent.toFixed(1) + '%';
     pctEl.style.color = pctColor(c.percent);
-    document.getElementById('fill').style.width = c.percent.toFixed(2) + '%';
+    const fillEl = document.getElementById('fill');
+    fillEl.style.width = c.percent.toFixed(2) + '%';
+    fillEl.className = 'fill' + (c.percent > 50 ? ' danger' : c.percent > 25 ? ' warn' : '');
     document.getElementById('projName').textContent = c.displayName + '  —  ' + c.workspacePath;
     const peakPctEl = document.getElementById('peakPct');
     peakPctEl.style.color = pctColor(c.peak.percent || 0);
@@ -518,12 +524,13 @@ function renderHtml(): string {
       const peakLeft  = Math.min(99, peakPct).toFixed(2);
       const rowColor = pctColor(p.percent || 0);
       const peakColor = pctColor(peakPct);
+      const miniClass = ((p.percent || 0) > 50) ? ' danger' : ((p.percent || 0) > 25) ? ' warn' : '';
       tr.innerHTML =
         '<td class="dot" style="' + (rowColor ? 'color:' + rowColor : '') + '">' + (isCurrent ? '●' : '○') + '</td>' +
-        '<td title="' + escapeAttr(p.workspacePath) + '">' + escapeHtml(p.displayName) + '</td>' +
+        '<td style="' + (rowColor ? 'color:' + rowColor : '') + '" title="' + escapeAttr(p.workspacePath) + '">' + escapeHtml(p.displayName) + '</td>' +
         '<td>' +
           '<span class="miniBar">' +
-            '<span class="miniFill" style="width:' + minBarPct + '%"></span>' +
+            '<span class="miniFill' + miniClass + '" style="width:' + minBarPct + '%"></span>' +
             (peakPct > (p.percent||0) ? '<span class="miniPeak" style="left:' + peakLeft + '%" title="Peak ' + peakPct.toFixed(1) + '%"></span>' : '') +
           '</span>' +
         '</td>' +
