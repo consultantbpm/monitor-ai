@@ -1,8 +1,8 @@
 {
   "name": "ai-code-exposure-monitor",
   "displayName": "AI Code Exposure Monitor",
-  "description": "Real-time percentage of your workspace source code that has been opened in the editor (and thus potentially exposed to AI assistants). Tracks peaks across all projects.",
-  "version": "0.3.0",
+  "description": "Live % of your code seen by AI assistants. Detects secrets, passwords, PII exposed to AI tools (Copilot, Claude, Cursor, etc.). 100% local. Works in VS Code, Cursor, Windsurf, VSCodium. MCP + team-work exposure features ready — just ask.",
+  "version": "0.4.0",
   "publisher": "ConsultantBPMhumansoftware",
   "license": "MIT",
   "icon": "media/eye.png",
@@ -30,20 +30,26 @@
     "copilot",
     "claude",
     "cursor",
+    "windsurf",
+    "vscodium",
     "continue",
     "gemini",
     "codeium",
+    "cline",
+    "cody",
     "monitor",
     "monitoring",
     "audit",
     "compliance",
     "privacy",
     "security",
-    "ip",
+    "secrets",
+    "pii",
+    "credentials",
     "leak",
     "context",
     "mcp",
-    "telemetry",
+    "team",
     "status bar",
     "dashboard"
   ],
@@ -159,6 +165,11 @@
           "type": "string",
           "default": "https://marketplace.visualstudio.com/search?term=pando&target=VSCode",
           "description": "URL opened from the high-exposure notification's CTA button."
+        },
+        "aiExposure.sensitiveAlert.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a live warning when a file containing secrets, credentials, or PII is opened (and therefore potentially exposed to AI tools)."
         }
       }
     }

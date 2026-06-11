@@ -55,7 +55,15 @@ function snapshot(tracker: ExposureTracker) {
       exposed: f.exposed,
     };
   });
-  return { current, projects, files: breakdown };
+  const sensitive = tracker.sensitiveExposedList(50).map((s) => {
+    const root = current?.workspacePath ?? '';
+    return {
+      path: s.path,
+      rel: root && s.path.startsWith(root) ? s.path.slice(root.length + 1) : s.path,
+      risk: s.risk,
+    };
+  });
+  return { current, projects, files: breakdown, sensitive };
 }
 
 function renderHtml(): string {
@@ -134,9 +142,28 @@ function renderHtml(): string {
   /* All detail values red */
   .grid div:nth-child(even) { color: #f44747; font-weight: 600; }
   .big { color: var(--vscode-foreground); }
+
+  .ai-banner { display: flex; gap: 10px; align-items: center; padding: 10px 14px; margin: 6px 0 14px; background: rgba(244,71,71,0.10); border-left: 4px solid #f44747; border-radius: 4px; }
+  .ai-banner.safe { background: rgba(78,201,176,0.08); border-left-color: #4ec9b0; }
+  .ai-banner .ai-icon { font-size: 1.3em; }
+  .ai-banner .ai-host { opacity: 0.7; font-size: 0.85em; margin-right: 8px; }
+  .ai-banner .ai-names { font-weight: 600; }
+  .ai-banner .ai-line { display: flex; flex-direction: column; flex: 1; }
+  .ai-banner .ai-explain { font-size: 0.82em; opacity: 0.85; margin-top: 2px; }
+  .feed-row.sensitive .badge { color: #ffb86b !important; }
+  .feed-row.sensitive .path::before { content: '⚠ '; color: #ffb86b; }
+  .feed-row.sensitive { background: rgba(255, 184, 107, 0.06); }
+  .sensitive-block { margin-top: 18px; padding: 10px 14px; border: 1px solid #ffb86b; border-radius: 4px; background: rgba(255,184,107,0.05); }
+  .sensitive-block h3 { margin: 0 0 8px; font-size: 0.9em; color: #ffb86b; letter-spacing: 1px; text-transform: uppercase; }
+  .sensitive-list { font-size: 0.85em; }
+  .sensitive-list .row { display: grid; grid-template-columns: 1fr max-content; gap: 8px; padding: 3px 0; border-bottom: 1px dashed var(--vscode-panel-border); }
+  .sensitive-list .row:last-child { border-bottom: 0; }
+  .sensitive-list .risk { color: #ffb86b; font-variant-numeric: tabular-nums; }
 </style></head>
 <body>
   <h1>AI Code Exposure Dashboard</h1>
+
+  <div id="aiBanner"></div>
 
   <div id="currentBlock">
     <div class="big" id="pct">—</div>
@@ -153,6 +180,8 @@ function renderHtml(): string {
       <div>Total files</div><div id="tf">0</div>
       <div>Peak %</div><div id="peakPct">0%</div>
       <div>Peak exposed lines</div><div id="peakLines">0</div>
+      <div>⚠ Sensitive files exposed</div><div id="senCount">0</div>
+      <div>Peak sensitive exposed</div><div id="senPeak">0</div>
     </div>
     <button id="rescan">Rescan workspace</button>
     <button id="reset" class="secondary">Reset session</button>
@@ -205,6 +234,11 @@ function renderHtml(): string {
     <tbody id="projectRows"></tbody>
     <tfoot id="projectFoot"></tfoot>
   </table>
+
+  <div class="sensitive-block" id="sensitiveBlock" style="display:none">
+    <h3>⚠ Sensitive files currently exposed</h3>
+    <div class="sensitive-list" id="sensitiveList"></div>
+  </div>
 
   <h2>Files (current project)</h2>
   <div class="filter">
@@ -284,16 +318,21 @@ function renderHtml(): string {
   function pushFeedRow(ev, fresh) {
     const feed = document.getElementById('feed');
     const row = document.createElement('div');
-    row.className = 'feed-row' + (fresh ? ' fresh' : '');
+    const sensitive = !!(ev.risk && ev.risk.length);
+    row.className = 'feed-row' + (fresh ? ' fresh' : '') + (sensitive ? ' sensitive' : '');
     const badgeChar = ({
       exposed: '●', changed: '✎', created: '+', deleted: '✕', reset: '↻', rescan: '↻'
     })[ev.type] || '○';
     const label = ev.rel || ev.path || (ev.type === 'reset' ? 'session reset' : ev.type === 'rescan' ? 'workspace rescanned' : '');
-    const meta = (ev.lines !== undefined && (ev.type === 'changed' ? (ev.lines >= 0 ? '+' : '') + ev.lines + ' L' : fmt(ev.lines) + ' L')) || '';
+    const baseMeta = (ev.lines !== undefined && (ev.type === 'changed' ? (ev.lines >= 0 ? '+' : '') + ev.lines + ' L' : fmt(ev.lines) + ' L')) || '';
+    const riskMeta = sensitive ? ' · ' + (ev.risk[0]) + (ev.risk.length > 1 ? ' (+' + (ev.risk.length - 1) + ')' : '') : '';
+    const titleAttr = sensitive
+      ? (ev.path || '') + ' — risk: ' + (ev.risk || []).join(', ')
+      : (ev.path || '');
     row.innerHTML =
       '<span class="badge b-' + ev.type + '">' + badgeChar + '</span>' +
-      '<span class="path" data-path="' + escapeAttr(ev.path || '') + '" title="' + escapeAttr(ev.path || '') + '">' + escapeHtml(label) + '</span>' +
-      '<span class="meta">' + meta + ' · ' + ageLabel(ev.ts) + '</span>';
+      '<span class="path" data-path="' + escapeAttr(ev.path || '') + '" title="' + escapeAttr(titleAttr) + '">' + escapeHtml(label) + '</span>' +
+      '<span class="meta">' + baseMeta + riskMeta + ' · ' + ageLabel(ev.ts) + '</span>';
     const pathEl = row.querySelector('.path');
     if (ev.path) pathEl.addEventListener('click', () => vscode.postMessage({ type: 'open', path: ev.path }));
     feed.insertBefore(row, feed.firstChild);
@@ -364,9 +403,57 @@ function renderHtml(): string {
   });
 
   function render() {
+    renderAiBanner();
     renderCurrent();
     renderProjects();
     renderFiles();
+    renderSensitive();
+  }
+
+  function renderAiBanner() {
+    const el = document.getElementById('aiBanner');
+    const ai = state.current?.ai;
+    if (!ai) { el.innerHTML = ''; return; }
+    const parts = [];
+    if (ai.nativeAi) parts.push(escapeHtml(ai.host) + ' (native AI)');
+    parts.push(...ai.extensions.map(escapeHtml));
+    if (parts.length === 0) {
+      el.innerHTML =
+        '<div class="ai-banner safe">' +
+          '<span class="ai-icon">●</span>' +
+          '<div class="ai-line">' +
+            '<div><span class="ai-host">Host:</span> ' + escapeHtml(ai.host) + '</div>' +
+            '<div class="ai-explain">No AI assistants detected.</div>' +
+          '</div>' +
+        '</div>';
+      return;
+    }
+    el.innerHTML =
+      '<div class="ai-banner">' +
+        '<span class="ai-icon">🤖</span>' +
+        '<div class="ai-line">' +
+          '<div><span class="ai-host">Host:</span> ' + escapeHtml(ai.host) + ' · <span class="ai-names">' + parts.join(', ') + '</span></div>' +
+          '<div class="ai-explain">Your code is potentially visible to ' + parts.length + ' AI context window' + (parts.length === 1 ? '' : 's') + '.</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderSensitive() {
+    const block = document.getElementById('sensitiveBlock');
+    const list = document.getElementById('sensitiveList');
+    const items = state.sensitive || [];
+    if (items.length === 0) { block.style.display = 'none'; list.innerHTML = ''; return; }
+    block.style.display = '';
+    list.innerHTML = items.map((s) =>
+      '<div class="row" title="' + escapeAttr(s.path) + '">' +
+        '<span class="path" data-path="' + escapeAttr(s.path) + '">⚠ ' + escapeHtml(s.rel) + '</span>' +
+        '<span class="risk">' + escapeHtml(s.risk.slice(0, 3).join(', ')) + (s.risk.length > 3 ? ' (+' + (s.risk.length - 3) + ')' : '') + '</span>' +
+      '</div>'
+    ).join('');
+    list.querySelectorAll('.path[data-path]').forEach((el) => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => vscode.postMessage({ type: 'open', path: el.dataset.path }));
+    });
   }
 
   function renderCurrent() {
@@ -392,6 +479,8 @@ function renderHtml(): string {
     animateNum(document.getElementById('tf'), c.totalFiles);
     document.getElementById('peakPct').textContent  = (c.peak.percent || 0).toFixed(1) + '%';
     animateNum(document.getElementById('peakLines'), c.peak.exposedLines);
+    animateNum(document.getElementById('senCount'), c.sensitiveExposedFiles || 0);
+    animateNum(document.getElementById('senPeak'),  c.sensitivePeak?.count || 0);
     const peakMark = document.getElementById('peakMark');
     if (c.peak.percent > c.percent) {
       peakMark.style.display = 'block';

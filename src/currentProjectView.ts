@@ -60,6 +60,14 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   .label { opacity: 0.7; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
   .big { font-size: 2.4em; font-weight: 600; line-height: 1.1; margin: 4px 0; font-variant-numeric: tabular-nums; color: var(--vscode-foreground); }
   .num.detail { color: #f44747; }
+  .ai-banner { display: flex; gap: 6px; align-items: center; padding: 6px 8px; margin: 4px 0 6px; background: rgba(244,71,71,0.08); border-left: 3px solid #f44747; border-radius: 2px; font-size: 0.78em; }
+  .ai-banner.safe { background: rgba(78,201,176,0.06); border-left-color: #4ec9b0; }
+  .ai-banner .ai-icon { font-size: 1.1em; }
+  .ai-banner .ai-names { opacity: 0.95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .risk-line { display: flex; gap: 6px; align-items: baseline; padding: 4px 0; }
+  .risk-line .lbl { color: #f44747; font-weight: 600; font-size: 0.78em; letter-spacing: 0.5px; text-transform: uppercase; }
+  .feed-row.sensitive .badge { color: #ffb86b !important; }
+  .feed-row.sensitive .path::before { content: '⚠ '; color: #ffb86b; }
   .bar { height: 10px; background: var(--vscode-input-background); border-radius: 5px; overflow: hidden; margin: 4px 0 8px; position: relative; }
   .fill { height: 100%; background: linear-gradient(90deg, #4ec9b0, #c586c0); transition: width .3s ease; }
   .peakMark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--vscode-foreground); opacity: 0.55; }
@@ -243,7 +251,15 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   function renderBody(x) {
     const pct = x.percent || 0;
     const peakPct = x.peak.percent || 0;
+    const ai = x.ai || { host: 'VS Code', nativeAi: false, extensions: [] };
+    const aiParts = [];
+    if (ai.nativeAi) aiParts.push(escapeHtml(ai.host));
+    aiParts.push(...ai.extensions.map(escapeHtml));
+    const aiBanner = aiParts.length > 0
+      ? '<div class="ai-banner"><span class="ai-icon">🤖</span><span class="ai-names" title="' + escapeHtml(aiParts.join(', ')) + '">' + aiParts.join(', ') + '</span></div>'
+      : '<div class="ai-banner safe"><span class="ai-icon">●</span><span class="ai-names">No AI assistants detected</span></div>';
     document.getElementById('body').innerHTML =
+      aiBanner +
       '<div class="label">' + escapeHtml(x.displayName) + '</div>' +
       '<div class="big" id="pct">' + pct.toFixed(1) + '%</div>' +
       '<div class="bar">' +
@@ -258,6 +274,7 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
         '<span>Total lines</span><span class="num detail" id="tl" data-value="0">0</span>' +
         '<span>Exposed files</span><span class="num detail" id="ef" data-value="0">0</span>' +
         '<span>Total files</span><span class="num detail" id="tf" data-value="0">0</span>' +
+        '<span>⚠ Sensitive exposed</span><span class="num detail" id="se" data-value="0">0</span>' +
         '<span>Peak exposed lines</span><span class="num detail" id="pl" data-value="0">0</span>' +
       '</div>';
   }
@@ -274,6 +291,7 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
     setNum('tl', x.totalLines);
     setNum('ef', x.exposedFiles);
     setNum('tf', x.totalFiles);
+    setNum('se', x.sensitiveExposedFiles || 0);
     setNum('pl', x.peak.exposedLines);
     lastPct = pct;
   }
@@ -281,15 +299,19 @@ export class CurrentProjectViewProvider implements vscode.WebviewViewProvider {
   function pushFeedRow(ev, fresh) {
     const feed = document.getElementById('feed');
     const row = document.createElement('div');
-    row.className = 'feed-row' + (fresh ? ' fresh' : '');
+    const sensitive = !!(ev.risk && ev.risk.length);
+    row.className = 'feed-row' + (fresh ? ' fresh' : '') + (sensitive ? ' sensitive' : '');
     const badgeChar = ({
       exposed: '●', changed: '✎', created: '+', deleted: '✕', reset: '↻', rescan: '↻'
     })[ev.type] || '○';
     const label = ev.rel || ev.path || (ev.type === 'reset' ? 'session reset' : ev.type === 'rescan' ? 'workspace rescanned' : '');
     const meta = (ev.lines !== undefined && (ev.type === 'changed' ? (ev.lines >= 0 ? '+' : '') + ev.lines + ' L' : fmt(ev.lines) + ' L')) || '';
+    const titleAttr = sensitive
+      ? (ev.path || '') + ' — risk: ' + (ev.risk || []).join(', ')
+      : (ev.path || '');
     row.innerHTML =
       '<span class="badge b-' + ev.type + '">' + badgeChar + '</span>' +
-      '<span class="path" title="' + escapeHtml(ev.path || '') + '">' + escapeHtml(label) + '</span>' +
+      '<span class="path" title="' + escapeHtml(titleAttr) + '">' + escapeHtml(label) + '</span>' +
       '<span class="meta">' + meta + ' &middot; ' + ageLabel(ev.ts) + '</span>';
     feed.insertBefore(row, feed.firstChild);
     while (feed.children.length > 30) feed.removeChild(feed.lastChild);

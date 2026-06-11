@@ -7,6 +7,36 @@ import { installThresholdAd } from './ad';
 
 const out = vscode.window.createOutputChannel('AI Code Exposure Monitor');
 
+const ALERT_SUPPRESS_KEY = 'aiExposure.sensitiveAlertSuppressed';
+
+function installSensitiveAlert(context: vscode.ExtensionContext, tracker: ExposureTracker): vscode.Disposable {
+  const alertedPaths = new Set<string>();
+  return tracker.onActivity(async (ev) => {
+    if (ev.type !== 'exposed' || !ev.risk || ev.risk.length === 0 || !ev.path) return;
+    const cfg = vscode.workspace.getConfiguration('aiExposure');
+    if (!cfg.get<boolean>('sensitiveAlert.enabled', true)) return;
+    if (context.globalState.get<boolean>(ALERT_SUPPRESS_KEY, false)) return;
+    if (alertedPaths.has(ev.path)) return;
+    alertedPaths.add(ev.path);
+    const fname = ev.rel || ev.path;
+    const top = ev.risk.slice(0, 3).join(', ');
+    const more = ev.risk.length > 3 ? ` (+${ev.risk.length - 3} more)` : '';
+    const pick = await vscode.window.showWarningMessage(
+      `⚠ Sensitive file exposed to AI tools: ${fname} — ${top}${more}`,
+      'Open dashboard',
+      'Reset session',
+      "Don't show again"
+    );
+    if (pick === 'Open dashboard') {
+      await vscode.commands.executeCommand('aiExposure.showDashboard');
+    } else if (pick === 'Reset session') {
+      await vscode.commands.executeCommand('aiExposure.resetCurrent');
+    } else if (pick === "Don't show again") {
+      await context.globalState.update(ALERT_SUPPRESS_KEY, true);
+    }
+  });
+}
+
 export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(out);
   out.appendLine('[activate] start at ' + new Date().toISOString());
@@ -23,6 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
   out.appendLine('[activate] sidebar view registered');
 
   context.subscriptions.push(installThresholdAd(context, tracker));
+  context.subscriptions.push(installSensitiveAlert(context, tracker));
 
   context.subscriptions.push(
     vscode.commands.registerCommand('aiExposure.showDashboard', () => {

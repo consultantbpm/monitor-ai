@@ -8,22 +8,28 @@
 
 **Know exactly how much of your source code has been seen by an AI assistant.**
 
-Every time you open a file in VS Code, it can be picked up by AI assistants (Copilot, Claude, Gemini, Cursor, Continue, Pando, etc.) as context. Most developers have no idea what percentage of their codebase has already been streamed to a model. This extension shows that number — live — in your status bar.
+Every time you open a file in your editor, it can be picked up by AI assistants (Copilot, Claude, Gemini, Cursor, Continue, Pando, etc.) as context. Most developers have no idea what percentage of their codebase has already been streamed to a model. This extension shows that number — live — in your status bar.
+
+**Works in:** VS Code · Cursor · Windsurf · VSCodium · Trae (any VS Code–compatible host).
+
+> 🛰  **MCP + team-work exposure features are ready — just ask.** Drop an issue if you want the MCP server (let AI agents read their own exposure cost) or team aggregation (opt-in cloud roll-up across developers) enabled for your org.
 
 ---
 
 ## What it does
 
-- 📊 **Live percentage in the status bar:** `👁 AI exposure: 37.4%`
+- 📊 **Live percentage in the status bar:** `👁 AI exposure: 37.4%` (colored — orange >25%, red >50%)
+- 🚨 **Live sensitive-file alert** — pops a warning when you open a file containing secrets (AWS/GCP keys, GitHub PATs, OpenAI/Anthropic keys, JWTs, private key blocks, DB URLs with credentials), hardcoded passwords/usernames, or PII (emails, SSN, credit cards, phone numbers, IBAN, date of birth)
+- 🤖 **AI assistants detected banner** — automatically detects Copilot, Claude Code, Cursor (native), Windsurf (native), Gemini, Codeium, Continue, Cline, Cody, pandō, etc.
 - 📈 **Live sparkline** of % over the last 60 seconds (1 sample/sec)
-- 📰 **Live activity feed** — file opened, modified, created, deleted, reset, rescan
+- 📰 **Live activity feed** — file opened, modified, created, deleted, reset, rescan; sensitive files visually flagged
 - 💓 **Heartbeat indicator** + "Xs ago" so you can see the monitor is alive
-- 🔢 **Animated counters** for exposed lines / files (green ↑, red ↓)
-- 🏔 **Peaks per project**, retained across VS Code restarts
-- 🗂 **Multi-project dashboard** — every workspace you've ever opened, ranked
+- 🔢 **Animated counters** for exposed lines / files / sensitive files
+- 🏔 **Peaks per project**, retained across editor restarts
+- 🗂 **Multi-project dashboard** — every workspace you've ever opened, ranked by current exposure %
 - 🔁 **Reset, rescan, forget project** controls — full local control of the data
 
-Everything is computed and stored **locally** in VS Code's `globalState`. Nothing is sent anywhere.
+Everything is computed and stored **locally** in your editor's `globalState`. Nothing is sent anywhere.
 
 ---
 

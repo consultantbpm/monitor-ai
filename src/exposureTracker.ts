@@ -1,8 +1,11 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { scanRiskByPath, scanRiskByContent, RiskFinding } from './secrets';
+import { detectAi, AiPresence } from './aiDetect';
 
 interface FileEntry {
   lines: number;
+  risk?: RiskFinding[];
 }
 
 export interface ProjectPeak {
@@ -22,6 +25,9 @@ export interface ProjectMetrics {
   percent: number;
   peak: ProjectPeak;
   lastSeen: number;
+  sensitiveExposedFiles: number;
+  sensitivePeak: { count: number; at: number };
+  ai: AiPresence;
 }
 
 export type ActivityType =
@@ -38,6 +44,7 @@ export interface ActivityEvent {
   rel?: string;
   lines?: number;
   ts: number;
+  risk?: string[];  // risk pattern labels if file is sensitive
 }
 
 const PROJECTS_KEY = 'aiExposure.projects';
@@ -120,7 +127,8 @@ export class ExposureTracker {
       if (stat.type !== vscode.FileType.File) return;
       if (stat.size > maxBytes) return;
       const data = await vscode.workspace.fs.readFile(uri);
-      this.fileIndex.set(uri.fsPath, { lines: countLines(data) });
+      const risk = [...scanRiskByPath(uri.fsPath), ...scanRiskByContent(data)];
+      this.fileIndex.set(uri.fsPath, { lines: countLines(data), risk: risk.length ? risk : undefined });
     } catch { /* unreadable / vanished */ }
   }
 
@@ -133,7 +141,8 @@ export class ExposureTracker {
     this.exposed.add(fsPath);
     this.persistExposed();
     this.persistMetrics();
-    this.pushActivity({ type: 'exposed', path: fsPath, rel: this.relPath(fsPath), lines: entry.lines, ts: Date.now() });
+    const risk = entry.risk?.map((r) => r.pattern);
+    this.pushActivity({ type: 'exposed', path: fsPath, rel: this.relPath(fsPath), lines: entry.lines, ts: Date.now(), risk });
     this._onChange.fire();
   }
 
@@ -217,6 +226,27 @@ export class ExposureTracker {
     return n;
   }
 
+  sensitiveExposedCount(): number {
+    let n = 0;
+    for (const p of this.exposed) {
+      const e = this.fileIndex.get(p);
+      if (e && e.risk && e.risk.length > 0) n++;
+    }
+    return n;
+  }
+
+  sensitiveExposedList(limit = 50): { path: string; risk: string[] }[] {
+    const out: { path: string; risk: string[] }[] = [];
+    for (const p of this.exposed) {
+      const e = this.fileIndex.get(p);
+      if (e && e.risk && e.risk.length > 0) {
+        out.push({ path: p, risk: e.risk.map((r) => r.pattern) });
+        if (out.length >= limit) break;
+      }
+    }
+    return out;
+  }
+
   totalFileCount(): number {
     return this.fileIndex.size;
   }
@@ -242,11 +272,17 @@ export class ExposureTracker {
     const existing = all[wp];
     const pct = this.percent();
     const exposedLines = this.exposedLines();
+    const sensitive = this.sensitiveExposedCount();
     const peak: ProjectPeak = {
       percent: Math.max(existing?.peak.percent ?? 0, pct),
       percentAt: (existing?.peak.percent ?? 0) >= pct ? (existing?.peak.percentAt ?? Date.now()) : Date.now(),
       exposedLines: Math.max(existing?.peak.exposedLines ?? 0, exposedLines),
       exposedLinesAt: (existing?.peak.exposedLines ?? 0) >= exposedLines ? (existing?.peak.exposedLinesAt ?? Date.now()) : Date.now(),
+    };
+    const prevSensitive = existing?.sensitivePeak?.count ?? 0;
+    const sensitivePeak = {
+      count: Math.max(prevSensitive, sensitive),
+      at: prevSensitive >= sensitive ? (existing?.sensitivePeak?.at ?? Date.now()) : Date.now(),
     };
     return {
       workspacePath: wp,
@@ -258,6 +294,9 @@ export class ExposureTracker {
       percent: pct,
       peak,
       lastSeen: Date.now(),
+      sensitiveExposedFiles: sensitive,
+      sensitivePeak,
+      ai: detectAi(),
     };
   }
 
