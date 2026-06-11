@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+
+- Marketplace discoverability: added `proactive`, `prevention`, `proactive protection`, `psde` keywords. No functional changes.
+
 ## 0.6.0
 
 - **Inline highlighting** of the exact secret / credential / PII bytes inside open editors (🔴 secret · 🟠 credential · 🟡 PII), with overview-ruler markers and hover details. Toggle via `aiExposure.highlightSensitive.enabled`.
