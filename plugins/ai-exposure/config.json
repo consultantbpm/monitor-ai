@@ -1,0 +1,6 @@
+{
+  "mode": "ask",
+  "maxFileSizeKB": 2048,
+  "gateOn": ["secret", "credential"],
+  "trackExposure": true
+}

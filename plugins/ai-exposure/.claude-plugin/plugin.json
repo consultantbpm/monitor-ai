@@ -1,0 +1,17 @@
+{
+  "name": "ai-exposure",
+  "version": "0.1.0",
+  "description": "AI Code Exposure Monitor & Prevention — live % of your code seen by AI, and a gate that prevents secrets, credentials and PII from ever reaching the model's context. 100% local.",
+  "author": {
+    "name": "ConsultantBPM Human Software",
+    "email": "consultantbpm@gmail.com",
+    "url": "https://github.com/consultantbpm/monitor-ai"
+  },
+  "homepage": "https://github.com/consultantbpm/monitor-ai#readme",
+  "repository": "https://github.com/consultantbpm/monitor-ai",
+  "license": "SEE LICENSE IN LICENSE",
+  "keywords": [
+    "security", "privacy", "secrets", "pii", "credentials",
+    "compliance", "audit", "exposure", "guardrail"
+  ]
+}

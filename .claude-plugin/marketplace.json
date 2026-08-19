@@ -1,0 +1,16 @@
+{
+  "name": "monitor-ai",
+  "description": "Tools from ConsultantBPM Human Software that keep sensitive code out of AI context windows.",
+  "owner": {
+    "name": "ConsultantBPM Human Software",
+    "email": "consultantbpm@gmail.com",
+    "url": "https://github.com/consultantbpm/monitor-ai"
+  },
+  "plugins": [
+    {
+      "name": "ai-exposure",
+      "source": "./plugins/ai-exposure",
+      "description": "AI Code Exposure Monitor & Prevention — live % of your code seen by AI, and a gate that prevents secrets, credentials and PII from ever reaching the model's context. 100% local. Shares its detection engine with the AI Code Exposure Monitor extension for VS Code."
+    }
+  ]
+}
