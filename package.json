@@ -1,6 +1,6 @@
 {
   "name": "ai-code-exposure-monitor",
-  "displayName": "AI Code Exposure Monitor",
+  "displayName": "AI Code Exposure Monitor & Prevention",
   "description": "Live % of your code seen by AI assistants. Detects secrets, passwords, PII exposed to AI tools (Copilot, Claude, Cursor, etc.). 100% local. Works in VS Code, Cursor, Windsurf, VSCodium. MCP + team-work exposure features ready — just ask.",
   "version": "0.6.1",
   "publisher": "ConsultantBPMhumansoftware",

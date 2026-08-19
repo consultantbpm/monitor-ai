@@ -14,3 +14,5 @@ scripts/**
 test-fixtures/**
 media/*.svg
 *.vsix
+plugins/**
+.claude-plugin/**

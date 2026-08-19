@@ -1,4 +1,4 @@
-# AI Code Exposure Monitor
+# AI Code Exposure Monitor & Prevention
 
 [![Install](https://img.shields.io/badge/install-marketplace-blue.png?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=ConsultantBPMhumansoftware.ai-code-exposure-monitor) [![License](https://img.shields.io/badge/license-Proprietary-red.png?style=flat-square)](LICENSE) [![Local](https://img.shields.io/badge/100%25-local-green.png?style=flat-square)]()
 
